@@ -16,6 +16,10 @@ MINLS = minls.o
 
 OBJS	= $(MINGET) $(MINLS)
 
+SRCS	= minget.c minls.c
+
+EXTRACLEAN = core $(PROGS)
+
 all: 	$(PROGS)
 
 allclean: clean
@@ -25,7 +29,7 @@ clean:
 	rm -f $(OBJS) *~ TAGS
 
 minget.o: minget.c
-	gcc -Wall -fPIC -o minget minget.c
+	gcc -Wall -fPIC -c minget.c
 
 minls.o: minls.c
-	gcc -Wall -fPIC -o minls minls.c
+	gcc -Wall -fPIC -c minls.c
