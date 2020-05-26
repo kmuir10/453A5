@@ -8,7 +8,7 @@ LDFLAGS  = -Wall -g -L/home/pn-cs453/Given/Asgn2
 
 PUBFILES =  minget.c minls.c
 
-PROGS	= minget minls  
+PROGS	= minget minls
 
 MINGET  = minget.o 
 
@@ -24,8 +24,8 @@ allclean: clean
 clean:	
 	rm -f $(OBJS) *~ TAGS
 
-minget.o: 
-	gcc -Wall -fPIC -c minget.c
+minget.o: minget.c
+	gcc -Wall -fPIC -o minget minget.c
 
-minls.o: 
-	gcc -Wall -fPIC -c minls.c
+minls.o: minls.c
+	gcc -Wall -fPIC -o minls minls.c
