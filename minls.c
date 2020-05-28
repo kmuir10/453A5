@@ -5,35 +5,26 @@
 
 
 int main(int argc, char *argv[]){
-  
-	int opt = 0;
-	char *ptr;
-
-	while ((opt = getopt(argc, argv, "vps")) != -1){
-
-		printf("This is opt: %d, %d\n", opt, optind);
-
-		if (opt == -1){
-			printf("Bad-case\n");
-			return 0;
-		}
-		else if (opt == 'p'){
-			printf("P-case, id: %lu\n", 
-				strtol(argv[optind], &ptr, 10));
-		}
-		else if (opt == 's'){
-			printf("S-case, id: %lu\n", 
-				strtol(argv[optind], &ptr, 10));
-		}
-		else if (opt == 'v'){
-			printf("V-case, id: %lu\n", 
-				strtol(argv[optind], &ptr, 10));
-		}
-		else{
-			printf("NO-case\n");
-			return 0;
-		}
-	}
-
+  int opt = 0;
+  while ((opt = getopt(argc, argv, "v:ps")) != -1){
+    printf("This is opt: %d, %d\n", opt, optind);
+    switch(opt){
+      case('p'):
+        printf("P-case, id: %lu\n", 
+          strtol(argv[optind], &ptr, 10));
+        break;
+      case('s'):
+        printf("S-case, id: %lu\n", 
+          strtol(argv[optind], &ptr, 10));
+        break;
+      case('v'):
+        printf("V-case, id: %lu\n", 
+          strtol(argv[optind], &ptr, 10));
+        break;
+      default:
+        printf("NO-case\n");
+    }
+  }
   return 0;
 }
+

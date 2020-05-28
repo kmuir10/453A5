@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdint.h>
+#include "debug.h"
 
 #define PTABLE_ADDR 0x1BE
 #define MINIX_PTYPE 0x81
@@ -69,19 +70,6 @@ typedef struct dirent{
   uint32_t inode;
   unsigned char name[60];
 }*Dirent;
-
-typedef struct part_entry{
-  unsigned char bootind;
-  unsigned char start_head;
-  unsigned char start_sec;
-  unsigned char start_cyl;
-  unsigned char sysind;
-  unsigned char last_head;
-  unsigned char last_sec;
-  unsigned char last_cyl;
-  unsigned long lowsec;
-  unsigned long size;
-}*Part_entry;
 
 /* swap endianness */
 int32_t swend32(int32_t i);
