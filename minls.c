@@ -10,13 +10,16 @@ int main(int argc, char *argv[]){
     printf("This is opt: %d, %d\n", opt, optind);
     switch(opt){
       case('p'):
-        printf("P-case\n");
+        printf("P-case, id: %lu\n", 
+          strtol(argv[optind], &ptr, 10));
         break;
       case('s'):
-        printf("S-case\n");
+        printf("S-case, id: %lu\n", 
+          strtol(argv[optind], &ptr, 10));
         break;
       case('v'):
-        printf("V-case\n");
+        printf("V-case, id: %lu\n", 
+          strtol(argv[optind], &ptr, 10));
         break;
       default:
         printf("NO-case\n");

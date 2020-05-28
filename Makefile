@@ -26,7 +26,7 @@ allclean: clean
 	@rm -f $(EXTRACLEAN)
 
 clean:	
-	rm -f $(OBJS) *~ TAGS
+	rm -f $(OBJS) $(PROGS) *~ TAGS
 
 minget.o: minget.c
 	gcc -Wall -fPIC -c minget.c
