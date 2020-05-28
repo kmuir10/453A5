@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdint.h>
 
 #define PTABLE_ADDR 0x1BE
 #define MINIX_PTYPE 0x81
@@ -29,7 +30,7 @@ typedef struct partn{
 }*Partn;
 
 /* superblock struct */
-typedef struct sblock{
+typedef struct sublock{
   uint32_t ninodes;
   uint16_t pad1;
   int16_t i_blocks;
@@ -43,7 +44,7 @@ typedef struct sblock{
   int16_t pad3;
   uint16_t blocksize;
   uint8_t subversion;
-}*Sblock
+}*Sublock;
 
 #define DIRECT_ZONES 7
 
@@ -56,23 +57,36 @@ typedef struct inode{
   int32_t atime;
   int32_t mtime;
   int32_t ctime;
-  uint32_t zone[DIRECT_ZONES]
+  uint32_t zone[DIRECT_ZONES];
   uint32_t indirect;
   uint32_t two_indirect;
   uint32_t unused;
-}*Inode
+}*Inode;
 
 /* directory entry */
 typedef struct dirent{
   uint32_t inode;
   unsigned char name[60];
-}
+}*Dirent;
+
+typedef struct part_entry{
+  unsigned char bootind;
+  unsigned char start_head;
+  unsigned char start_sec;
+  unsigned char start_cyl;
+  unsigned char sysind;
+  unsigned char last_head;
+  unsigned char last_sec;
+  unsigned char last_cyl;
+  unsigned long lowsec;
+  unsigned long size;
+}*Part_entry;
 
 /* swap endianness */
 int32_t swend32(int32_t i);
 int16_t swend16(int16_t i);
 
 /* calculate zone size */
-int32_t zsize(Sblock sblk);
+int32_t zsize(Sublock sblk);
 
 #endif
