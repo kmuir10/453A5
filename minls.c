@@ -6,5 +6,9 @@
 
 int main(int argc, char *argv[]){
   
+	int opt = getopt(argc, argv, "p:s");
+
+	printf("This is opt: %i\n", opt);
+
   return 0;
 }
