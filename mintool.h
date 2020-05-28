@@ -9,12 +9,13 @@
 
 #define PTABLE_ADDR 0x1BE
 #define MINIX_PTYPE 0x81
-#define SIG_510 0x55
-#define SIG_511 0xAA
-#define MAGIC 0x4D5A
-#define MAGIC_R 0x5A4D
-#define INODE_SZ 64
-#define DIRENT_SZ 64
+#define SIG_510     0x55
+#define SIG_511     0xAA
+#define MAGIC       0x4D5A
+#define MAGIC_R     0x5A4D
+#define INODE_SZ    64
+#define DIRENT_SZ   64
+#define UNSPEC      -1
 
 /* partition struct */
 typedef struct partn{
@@ -78,3 +79,4 @@ int16_t swend16(int16_t i);
 int32_t zsize(Sublock sblk);
 
 #endif
+

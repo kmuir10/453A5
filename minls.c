@@ -6,20 +6,20 @@
 
 int main(int argc, char *argv[]){
   int opt = 0;
+  long ptn = UNSPEC, sptn = UNSPEC;
   while ((opt = getopt(argc, argv, "v:ps")) != -1){
     printf("This is opt: %d, %d\n", opt, optind);
     switch(opt){
       case('p'):
-        printf("P-case, id: %lu\n", 
-          strtol(argv[optind], &ptr, 10));
+        ptn = strtol(argv[optind], NULL, 10);
+        printf("P-case, id: %ld\n", ptn);
         break;
       case('s'):
-        printf("S-case, id: %lu\n", 
-          strtol(argv[optind], &ptr, 10));
+        sptn = strtol(argv[optind], NULL, 10);
+        printf("S-case, id: %ld\n", sptn);
         break;
       case('v'):
-        printf("V-case, id: %lu\n", 
-          strtol(argv[optind], &ptr, 10));
+        printf("V-case)\n");
         break;
       default:
         printf("NO-case\n");
