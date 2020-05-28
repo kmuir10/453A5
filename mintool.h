@@ -15,6 +15,7 @@
 #define MAGIC_R     0x5A4D
 #define INODE_SZ    64
 #define DIRENT_SZ   64
+#define DECIMAL     10
 #define UNSPEC      -1
 
 /* partition struct */
