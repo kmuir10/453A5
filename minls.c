@@ -8,9 +8,10 @@ int main(int argc, char *argv[]){
   
 	int opt = 0;
 
-	printf("This is opt: %i\n", opt);
+	while ((opt = getopt(argc, argv, "v:p:s")) != -1){
 
-	while ((opt = getopt(argc, argv, "p:s")) != -1){
+		printf("This is opt: %d, %d\n", opt, optind);
+
 		if (opt == -1){
 			printf("Bad-case\n");
 			return 0;
@@ -20,6 +21,9 @@ int main(int argc, char *argv[]){
 		}
 		else if (opt == 's'){
 			printf("S-case\n");
+		}
+		else if (opt == 'v'){
+			printf("V-case\n");
 		}
 		else{
 			printf("NO-case\n");
