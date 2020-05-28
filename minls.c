@@ -7,8 +7,9 @@
 int main(int argc, char *argv[]){
   
 	int opt = 0;
+	char *ptr;
 
-	while ((opt = getopt(argc, argv, "v:p:s")) != -1){
+	while ((opt = getopt(argc, argv, "vps")) != -1){
 
 		printf("This is opt: %d, %d\n", opt, optind);
 
@@ -17,13 +18,16 @@ int main(int argc, char *argv[]){
 			return 0;
 		}
 		else if (opt == 'p'){
-			printf("P-case\n");
+			printf("P-case, id: %lu\n", 
+				strtol(argv[optind], &ptr, 10));
 		}
 		else if (opt == 's'){
-			printf("S-case\n");
+			printf("S-case, id: %lu\n", 
+				strtol(argv[optind], &ptr, 10));
 		}
 		else if (opt == 'v'){
-			printf("V-case\n");
+			printf("V-case, id: %lu\n", 
+				strtol(argv[optind], &ptr, 10));
 		}
 		else{
 			printf("NO-case\n");
