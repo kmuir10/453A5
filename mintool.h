@@ -26,7 +26,7 @@ typedef struct partent{
   uint8_t start_head;
   uint8_t start_sec;
   uint8_t start_cyl;
-  uint8_t type;
+  uint8_t type; /*if not 81, stop*/
   uint8_t end_head;
   uint8_t end_sec;
   uint8_t end_cyl;
@@ -83,6 +83,9 @@ int32_t zsize(sublock sblk);
 
 /* get partition table */
 void getPtable(FILE *img, partent *pt, int ptStart);
+
+/*Read all inputs from terminal*/
+void read_input(int argc, char *argv[]);
 
 #endif
 
