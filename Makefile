@@ -10,13 +10,13 @@ PUBFILES =  minget.c minls.c
 
 PROGS	= minget minls
 
-MINGET  = minget.o 
+MINGETO  = minget.o 
 
-MINLS = minls.o 
+MINLSO = minls.o 
 
-MINTOOL = mintool.o
+MINTOOLO = mintool.o
 
-OBJS	= $(MINGET) $(MINLS) $(MINTOOL)
+OBJS	= $(MINGETO) $(MINLSO) $(MINTOOLO)
 
 SRCS	= minget.c minls.c
 
@@ -30,8 +30,13 @@ allclean: clean
 clean:	
 	rm -f $(OBJS) $(PROGS) *~ TAGS
 
-minget.o: minget.c mintool.c mintool.h
-	gcc -Wall -fPIC -c minget.c mintool.c
+minget: minget.c mintool.o mintool.h
+	gcc -Wall -fPIC -c minget.c
+	gcc -Wall -fPIC -o minget mintool.o minget.o
 
-minls.o: minls.c mintool.c mintool.h
-	gcc -Wall -fPIC -c minls.c mintool.c
+minls.o: minls.c mintool.o mintool.h
+	gcc -Wall -fPIC -c minls.c 
+	gcc -Wall -fPIC -o minls mintool.o minls.o
+
+mintool.o: mintool.c mintool.h
+	gcc -Wall -fPIC -c mintool.c
