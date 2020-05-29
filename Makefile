@@ -30,13 +30,17 @@ allclean: clean
 clean:	
 	rm -f $(OBJS) $(PROGS) *~ TAGS
 
-minget: minget.c mintool.o mintool.h
-	gcc -Wall -fPIC -c minget.c
+minget: minget.o mintool.o
 	gcc -Wall -fPIC -o minget mintool.o minget.o
 
-minls.o: minls.c mintool.o mintool.h
-	gcc -Wall -fPIC -c minls.c 
+minls: minls.o mintool.o
 	gcc -Wall -fPIC -o minls mintool.o minls.o
+
+minls.o: minls.c mintool.o
+	gcc -Wall -fPIC -c minls.c 
+
+minget.o: minget.c mintool.o
+	gcc -Wall -fPIC -c minget.c
 
 mintool.o: mintool.c mintool.h
 	gcc -Wall -fPIC -c mintool.c
