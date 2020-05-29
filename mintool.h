@@ -13,13 +13,15 @@
 #define SIG_511     0xAA
 #define MAGIC       0x4D5A
 #define MAGIC_R     0x5A4D
+#define SECTOR_SZ   512
 #define INODE_SZ    64
 #define DIRENT_SZ   64
 #define DECIMAL     10
 #define UNSPEC      -1
+#define PTABLE_SZ   4
 
 /* partition struct */
-typedef struct partn{
+typedef struct partent{
   uint8_t bootind;
   uint8_t start_head;
   uint8_t start_sec;
@@ -30,7 +32,7 @@ typedef struct partn{
   uint8_t end_cyl;
   uint32_t lFirst;
   uint32_t size;
-}*Partn;
+}partent;
 
 /* superblock struct */
 typedef struct sublock{
@@ -47,7 +49,7 @@ typedef struct sublock{
   int16_t pad3;
   uint16_t blocksize;
   uint8_t subversion;
-}*Sublock;
+}sublock;
 
 #define DIRECT_ZONES 7
 
@@ -64,20 +66,23 @@ typedef struct inode{
   uint32_t indirect;
   uint32_t two_indirect;
   uint32_t unused;
-}*Inode;
+}inode;
 
 /* directory entry */
 typedef struct dirent{
   uint32_t inode;
   unsigned char name[60];
-}*Dirent;
+}dirent;
 
 /* swap endianness */
 int32_t swend32(int32_t i);
 int16_t swend16(int16_t i);
 
 /* calculate zone size */
-int32_t zsize(Sublock sblk);
+int32_t zsize(sublock sblk);
+
+/* get partition table */
+void getPtable(FILE *img, partent *pt, int ptStart);
 
 #endif
 

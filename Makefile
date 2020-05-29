@@ -14,7 +14,9 @@ MINGET  = minget.o
 
 MINLS = minls.o 
 
-OBJS	= $(MINGET) $(MINLS)
+MINTOOL = mintool.o
+
+OBJS	= $(MINGET) $(MINLS) $(MINTOOL)
 
 SRCS	= minget.c minls.c
 
@@ -28,8 +30,8 @@ allclean: clean
 clean:	
 	rm -f $(OBJS) $(PROGS) *~ TAGS
 
-minget.o: minget.c
-	gcc -Wall -fPIC -c minget.c
+minget.o: minget.c mintool.c mintool.h
+	gcc -Wall -fPIC -c minget.c mintool.c
 
-minls.o: minls.c
-	gcc -Wall -fPIC -c minls.c
+minls.o: minls.c mintool.c mintool.h
+	gcc -Wall -fPIC -c minls.c mintool.c
