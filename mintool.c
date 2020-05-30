@@ -60,14 +60,38 @@ void getSublock(FILE *img, sublock *sb, int ptStart){
     exit(EXIT_FAILURE);
   }
 
-  if(fread(sb, sizeof(struct sublock), 1, img) < 1){
+  if(fread(sb, sizeof(sublock), 1, img) < 1){
     perror("fread");
     exit(EXIT_FAILURE);
   }
 }
 
-/* NOT IMPLEMENTED */
-inode findFile(FILE *img, sublock sb, int32_t suBlockLoc, char *path){
+inode findFile(FILE *img, sublock sb, int32_t ptLoc, char *path){
   inode inod;
+  int32_t inodNum = 0, inodesLoc = 0;
+  printf("ninodes: %d, i_blocks: %d, z_blocks %d, log_zone_size %d, zones %d, magic %d, blocksize %d\n", sb.ninodes, sb.i_blocks, sb.z_blocks, sb.log_zone_size, sb.zones, sb.magic, sb.blocksize);
+
+  /* start of partition + boot + super + i_block + z_block gets first inode */
+
+  inodesLoc = ptLoc + (2 + sb.i_blocks + sb.z_blocks) * sb.blocksize;
+  printf("inodesLoc: 0x%x\n", inodesLoc);
+  if(fseek(img, inodesLoc, SEEK_SET) < 0){
+    perror("fseek");
+    exit(EXIT_FAILURE);
+  }
+
+  if(fread(&inod, sizeof(inode), 1, img) < 1){
+    perror("fread");
+    exit(EXIT_FAILURE);
+  }
+
+  if(inod.mode & REGULAR_FILE){
+    printf("Regular file\n");
+  }
+  if(inod.mode & DIRECTORY){
+    printf("Directory\n");
+  }
+  printf("mode:%x\n", inod.mode);
+
   return inod;
 }

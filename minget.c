@@ -64,7 +64,7 @@ int main(int argc, char *argv[]){
   getSublock(img, &sb, 0);
   eprintf("magic number: %x\n", sb.magic);
   
-  inode inod = findFile(img, sb, suBlockLoc, "usr/src/include/stdio.h");
+  inode inod = findFile(img, sb, 0, "usr/src/include/stdio.h");
   return 0;
 }
 

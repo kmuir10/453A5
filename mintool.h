@@ -52,7 +52,9 @@ typedef struct sublock{
   uint8_t subversion;
 }sublock;
 
-#define DIRECT_ZONES 7
+#define DIRECT_ZONES  7
+#define REGULAR_FILE  0100000
+#define DIRECTORY     040000
 
 typedef struct inode{
   uint16_t mode;
