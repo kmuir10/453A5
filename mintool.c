@@ -21,6 +21,13 @@ void getPtable(FILE *img, partent *pt, int ptStart){
   /* the partition is ptStart sectors away from the start of the file
    * multiply by SECTOR_SZ to convert from sectors to bytes, and add the offset
    * PTABLE_ADDR (0x1BE) to get the partition table itself */
+
+  /*If not a minix type, stop*/
+  if (pt -> type != MINIX_PTYPE){
+  	perror("Not of MINIX_PTYPE");
+  	exit(EXIT_FAILURE);
+  }
+
   int ptableLoc = ptStart * SECTOR_SZ + PTABLE_ADDR;
   if(fseek(img, ptableLoc, SEEK_SET) < 0){
     perror("fseek");
