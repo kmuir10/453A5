@@ -89,7 +89,10 @@ void getPtable(FILE *img, partent *pt, int ptStart);
 void getSublock(FILE *img, sublock *sb, int ptStart);
 
 /*Read all inputs from terminal*/
-void read_input(int argc, char *argv[]);
+void read_input(int argc, char *argv[], 
+  char image_buffer[100], char filepath_buffer[100], 
+  int *v_flag, int *p_flag, int *s_flag,
+  int *num_of_partitions, int *num_of_sub_partitions);
 
 /* Get an inode from a filepath and superblock */
 inode findFile(FILE *img, sublock sb, int32_t suBlockLoc, char *path);
