@@ -66,3 +66,8 @@ void getSublock(FILE *img, sublock *sb, int ptStart){
   }
 }
 
+/* NOT IMPLEMENTED */
+inode findFile(FILE *img, sublock sb, int32_t suBlockLoc, char *path){
+  inode inod;
+  return inod;
+}

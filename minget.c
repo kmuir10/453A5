@@ -17,7 +17,9 @@ int main(int argc, char *argv[]){
   char b510, b511;
   size_t sz = 0;
   partent pt[4];
+  int sptLoc = 0;
   sublock sb;
+  int suBlockLoc = SBLOCK_ADDR;
   eprintf("%d minget\n", 0);
 
   /* open the image */
@@ -49,12 +51,20 @@ int main(int argc, char *argv[]){
     exit(EXIT_FAILURE);
   }
 
-  /* get the first entry */
-  getPtable(img, pt, 0);
+  /* get the first entry if the user asked for it*/
+  if(p_flag){
+    getPtable(img, pt, 0);
+  }
+  /* stpLoc isn't updated properly yet, fix read_input first to get that from args */
+  if(s_flag){
+    getPtable(img, pt, sptLoc);
+  }
 
   /* get the superblock */
   getSublock(img, &sb, 0);
-  printf("%d\n", sb.magic);
+  eprintf("magic number: %x\n", sb.magic);
+  
+  inode inod = findFile(img, sb, suBlockLoc, "usr/src/include/stdio.h");
   return 0;
 }
 
@@ -111,6 +121,11 @@ void read_input(int argc, char *argv[]){
 
       printf("Filepath: %s\n", argv[2]);
       strcpy(filepath_buffer, argv[2]);
+    }
+
+    if(s_flag && !p_flag){
+      fprintf(stderr, "Must have partition to have subpartition\n");
+      exit(EXIT_FAILURE);
     }
   }
 }

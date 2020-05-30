@@ -91,5 +91,8 @@ void getSublock(FILE *img, sublock *sb, int ptStart);
 /*Read all inputs from terminal*/
 void read_input(int argc, char *argv[]);
 
+/* Get an inode from a filepath and superblock */
+inode findFile(FILE *img, sublock sb, int32_t suBlockLoc, char *path);
+
 #endif
 
