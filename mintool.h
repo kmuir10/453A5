@@ -8,6 +8,7 @@
 #include "debug.h"
 
 #define PTABLE_ADDR 0x1BE
+#define SBLOCK_ADDR 1024
 #define MINIX_PTYPE 0x81
 #define SIG_510     0x55
 #define SIG_511     0xAA
@@ -83,6 +84,9 @@ int32_t zsize(sublock sblk);
 
 /* get partition table */
 void getPtable(FILE *img, partent *pt, int ptStart);
+
+/* get superblock */
+void getSublock(FILE *img, sublock *sb, int ptStart);
 
 /*Read all inputs from terminal*/
 void read_input(int argc, char *argv[]);

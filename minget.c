@@ -20,7 +20,6 @@ int main(int argc, char *argv[]){
   eprintf("%d minget\n", 0);
 
   /* open the image */
-  //FILE *img = fopen("/home/chsitu/CPE-453/Asgn5/Professor/Images/HardDisk", "r");
   read_input(argc, argv);
   
   char *image_path = malloc(strlen(filepath_buffer) + 
