@@ -40,3 +40,18 @@ void getPtable(FILE *img, partent *pt, int ptStart){
   }
   printf("signature: %x\n", sig);
 }
+
+void getSublock(FILE *img, sublock *sb, int ptStart){
+  int sbLoc = ptStart + SBLOCK_ADDR;
+  printf("sbLoc:%d\n", sbLoc);
+  if(fseek(img, sbLoc, SEEK_SET) < 0){
+    perror("fseek");
+    exit(EXIT_FAILURE);
+  }
+
+  if(fread(sb, sizeof(struct sublock), 1, img) < 1){
+    perror("fread");
+    exit(EXIT_FAILURE);
+  }
+}
+
