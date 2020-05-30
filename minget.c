@@ -10,6 +10,7 @@ int s_flag = 0;
 char image_buffer[100];
 char filepath_buffer[100];
 FILE *image_fd;
+int has_flags = 0;
 
 int main(int argc, char *argv[]){
   char *env = getenv("MY_DEBUG");
@@ -21,15 +22,10 @@ int main(int argc, char *argv[]){
 
   /* open the image */
   read_input(argc, argv);
-  
-  char *image_path = malloc(strlen(filepath_buffer) + 
-  	strlen(image_buffer) + 1);
-  strcpy(image_path, filepath_buffer);
-	strcat(image_path, image_buffer);
 
-  printf("Image Path: %s\n", image_path);
+  printf("Image Path: %s\n", image_buffer);
 
-  FILE *img = fopen(image_path, "r");
+  FILE *img = fopen(image_buffer, "r");
 
   if(img == NULL){
     perror("fopen\n");
@@ -74,9 +70,14 @@ void read_input(int argc, char *argv[]){
     printf("-h help --- print usage information and exit\n");
     printf("-v verbose --- increase verbosity level\n");
   }
+  else if (argc == 2){
+    perror("Invalid number of arguments\n");
+    exit(EXIT_FAILURE);
+  }
   else{
     while ((opt = getopt(argc, argv, "vps")) != -1){
       printf("This is opt: %d, %d\n", opt, optind);
+      has_flags = 1;
       switch(opt){
         case('p'):
           ptn = strtol(argv[optind], NULL, 10);
@@ -97,10 +98,19 @@ void read_input(int argc, char *argv[]){
       }
     }
 
-    printf("Image: %s\n", argv[(optind + 1) + 1]);
-    strcpy(image_buffer, argv[(optind + 1) + 1]);
+    if (has_flags == 1){
+      printf("Image: %s\n", argv[(optind + 1) + 1]);
+      strcpy(image_buffer, argv[(optind + 1) + 1]);
 
-    printf("Filepath: %s\n", argv[(optind + 1) + 2]);
-    strcpy(filepath_buffer, argv[(optind + 1) + 2]);
+      printf("Filepath: %s\n", argv[(optind + 1) + 2]);
+      strcpy(filepath_buffer, argv[(optind + 1) + 2]);
+    }
+    else{
+      printf("Image: %s\n", argv[1]);
+      strcpy(image_buffer, argv[1]);
+
+      printf("Filepath: %s\n", argv[2]);
+      strcpy(filepath_buffer, argv[2]);
+    }
   }
 }
