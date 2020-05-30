@@ -22,12 +22,6 @@ void getPtable(FILE *img, partent *pt, int ptStart){
    * multiply by SECTOR_SZ to convert from sectors to bytes, and add the offset
    * PTABLE_ADDR (0x1BE) to get the partition table itself */
 
-  /*If not a minix type, stop*/
-  if (pt -> type != MINIX_PTYPE){
-  	perror("Not of MINIX_PTYPE");
-  	exit(EXIT_FAILURE);
-  }
-
   int ptableLoc = ptStart * SECTOR_SZ + PTABLE_ADDR;
   if(fseek(img, ptableLoc, SEEK_SET) < 0){
     perror("fseek");
@@ -46,6 +40,16 @@ void getPtable(FILE *img, partent *pt, int ptStart){
     exit(EXIT_FAILURE);
   }
   printf("signature: %x\n", sig);
+
+  /*If not a minix type, stop*/
+  if (pt -> type != MINIX_PTYPE){
+    printf("type number: %d\n", pt -> type);
+    perror("Not of MINIX_PTYPE");
+    exit(EXIT_FAILURE);
+  }
+  else{
+    printf("Success\n");
+  }
 }
 
 void getSublock(FILE *img, sublock *sb, int ptStart){
