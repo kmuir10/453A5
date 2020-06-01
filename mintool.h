@@ -87,6 +87,9 @@ int32_t zsize(sublock sblk);
 /* get partition table */
 void getPtable(FILE *img, partent *pt, int ptStart);
 
+/* copy inode with name nextFile into inod */
+void getNextInode(FILE *img, inode *inod, char *nextFile, int32_t ptLoc, int32_t zSize);
+
 /* get superblock */
 void getSublock(FILE *img, sublock *sb, int ptStart);
 

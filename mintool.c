@@ -74,9 +74,15 @@ void getSublock(FILE *img, sublock *sb, int ptStart){
   }
 }
 
+void getNextInode(FILE *img, inode *inod, char *nextFile, int32_t ptLoc, int32_t zSize){
+}
+
 inode findFile(FILE *img, sublock sb, int32_t ptLoc, char *path){
   inode inod;
-  int32_t inodNum = 0, inodesLoc = 0;
+  int32_t inodesLoc = 0, zSize = 0;
+  char *input = malloc(sizeof(char) * strlen(path));
+  strcpy(input, path);
+  char *tok = strtok(input, "/");
   printf("ninodes: %d, i_blocks: %d, z_blocks %d, log_zone_size %d, zones %d, magic %d, blocksize %d\n", sb.ninodes, sb.i_blocks, sb.z_blocks, sb.log_zone_size, sb.zones, sb.magic, sb.blocksize);
 
   /* start of partition + boot + super + i_block + z_block gets first inode */
@@ -101,16 +107,23 @@ inode findFile(FILE *img, sublock sb, int32_t ptLoc, char *path){
   }
   printf("mode:%x\n", inod.mode);
 
+  printf("%s\n", tok);
+  zSize = sb.blocksize << sb.log_zone_size;
+  while((tok = strtok(NULL, "/")) != NULL){
+    printf("%s\n", tok);
+    getNextInode(img, &inod, tok, ptLoc, zSize);
+  }
+  printf("%s\n", path);
+  free(input);
   return inod;
 }
 
 /*Reads the terminal files*/
 void read_input(int argc, char *argv[], 
-  char image_buffer[100], char filepath_buffer[100], 
+  char image_buffer[100], char *filepath_buffer, 
   int *v_flag, int *p_flag, int *s_flag,
   int *num_of_partitions, int *num_of_sub_partitions){
 
-  int is_root_dir = 0;
   int has_flags = 0;
 
   if (!strcmp(argv[0], "./minls")){
@@ -155,10 +168,8 @@ void read_input(int argc, char *argv[],
 
       if (argv[optind + 1 + 2] != NULL){
         printf("Filepath: %s\n", argv[(optind + 1) + 2]);
+        filepath_buffer = malloc(sizeof(char) * strlen(argv[optind+1+2]));
         strcpy(filepath_buffer, argv[(optind + 1) + 2]);
-      }
-      else{
-        is_root_dir = 1;
       }
     }
   }
@@ -209,6 +220,7 @@ void read_input(int argc, char *argv[],
         strcpy(image_buffer, argv[(optind + 1) + 1]);
 
         printf("Filepath: %s\n", argv[(optind + 1) + 2]);
+        filepath_buffer = malloc(sizeof(char) * strlen(argv[optind+1+2]));
         strcpy(filepath_buffer, argv[(optind + 1) + 2]);
       }
       else{
@@ -216,6 +228,7 @@ void read_input(int argc, char *argv[],
         strcpy(image_buffer, argv[1]);
 
         printf("Filepath: %s\n", argv[2]);
+        filepath_buffer = malloc(sizeof(char) * strlen(argv[2]));
         strcpy(filepath_buffer, argv[2]);
       }
 

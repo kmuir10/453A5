@@ -7,11 +7,9 @@
 int main(int argc, char *argv[]){
   char *env = getenv("MY_DEBUG");
   char b510, b511;
-  size_t sz = 0;
   partent pt[4];
   int sptLoc = 0;
   sublock sb;
-  int suBlockLoc = SBLOCK_ADDR;
   eprintf("%d minget\n", 0);
 
   /* open the image */
@@ -71,7 +69,8 @@ int main(int argc, char *argv[]){
   getSublock(img, &sb, 0);
   eprintf("magic number: %x\n", sb.magic);
   
-  inode inod = findFile(img, sb, 0, "usr/src/include/stdio.h");
+  inode inod = findFile(img, sb, 0, "/usr/src/include/stdio.h");
+  printf("%d\n", inod.size);
   return 0;
 }
 
