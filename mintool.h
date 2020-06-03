@@ -11,8 +11,8 @@ typedef struct args{
   int v_flag;
   int p_flag;
   int s_flag;
-  int ptn;
-  int sptn;
+  int pt;
+  int spt;
   int has_flags;
   char *image;
   char *filepath;
@@ -105,11 +105,31 @@ void getNextInode(FILE *img, inode *inod, char *nextFile, int32_t ptLoc, int32_t
 /* get superblock */
 void getSublock(FILE *img, sublock *sb, int ptStart);
 
+typedef struct indir_zone{
+  uint32_t *zones;
+  uint32_t z_idx;
+}indir_zone;
+
+typedef struct loader_tool{
+  char *contents;
+  inode *inod;
+  int32_t current_zone;
+  indir_zone i_one;
+  indir_zone i_two;
+  int32_t z_size;
+  int32_t pt_loc;
+}loader_tool;
+
+/* Get the root inode of a filesystem */
+inode findRoot(FILE *img, sublock sb, int32_t suBlockLoc);
+
 /* Get an inode from a filepath and superblock */
-inode findFile(FILE *img, sublock sb, int32_t suBlockLoc, char *path);
+inode findFile(FILE *img, char *path, loader_tool ldr){
 
 /* parse v, p, and s options */
 args parse_flags(int argc, char *argv[]);
+
+void load_zone(FILE *img, void *buf, int32_t zSize);
 
 #endif
 

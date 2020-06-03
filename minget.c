@@ -4,13 +4,12 @@
 #include <string.h>
 #include "mintool.h"
 
-static args read_input(int argc, char *argv[]);
+args read_input(int argc, char *argv[]);
 
 int main(int argc, char *argv[]){
   char *env = getenv("MY_DEBUG");
-  char b510, b511;
-  partent pt[4];
-  int sptLoc = 0;
+  partent pt_table[4];
+  int ptLoc = 0;
   sublock sb;
   eprintf("%d minget\n", 0);
 
@@ -23,48 +22,25 @@ int main(int argc, char *argv[]){
     perror("fopen\n");
     exit(EXIT_FAILURE);
   }
-  else{
-    printf("Such file\n");
-    printf("v_flag: %d\n", a.v_flag);
-    printf("p_flag: %i\n", a.p_flag);
-    printf("s_flag: %i\n", a.s_flag);
-    printf("partition: %i\n", a.ptn);
-    printf("subpartition: %i\n", a.sptn);
-  }
-  
-  eprintf("%d file opened\n", 1);
 
-  /* check the signature */
-  if(fseek(img, 510, SEEK_SET) != 0){
-    perror("fseek");
-    exit(EXIT_FAILURE);
-  }
-  eprintf("%d seeked\n", 2);
-  b510 = fgetc(img);
-  b511 = fgetc(img);
-  printf("%d, %d\n", (int8_t)b510, (int8_t)b511);
-
-  /* go to the partition directory */
-  if(fseek(img, 0x1BE, SEEK_SET) != 0){
-    perror("fseek");
-    exit(EXIT_FAILURE);
-  }
-
-  /* get the first entry if the user asked for it*/
+  /* get the first partition table if requested
+   * and calculate location of requested partition */
   if(a.p_flag){
-    getPtable(img, pt, 0);
+    getPtable(img, pt_table, 0);
+    ptLoc = pt_table[a.pt].lFirst * SECTOR_SZ;
   }
-  /* stpLoc isn't updated properly yet, fix read_input first to get that from args */
+
+  /* sptLoc isn't updated properly yet, fix read_input first to get that from args */
   if(a.s_flag){
-    getPtable(img, pt, sptLoc);
+    getPtable(img, pt_table, pt_table[a.pt].lFirst);
+    ptLoc = pt_table[a.spt].lFirst * SECTOR_SZ;
   }
 
   /* get the superblock */
-  getSublock(img, &sb, 0);
+  getSublock(img, &sb, ptLoc);
   eprintf("magic number: %x\n", sb.magic);
   
-  inode inod = findFile(img, sb, 0, a.filepath);
-  printf("%d\n", inod.size);
+  inode inod = findFile(img, sb, ptLoc, a.filepath);
   return 0;
 }
 

@@ -52,11 +52,8 @@ void getPtable(FILE *img, partent *pt, int ptStart){
   /*If not a minix type, stop*/
   if (pt -> type != MINIX_PTYPE){
     printf("type number: %d\n", pt -> type);
-    perror("Not of MINIX_PTYPE");
+    printf("Not of type MINIX_PTYPE\n");
     exit(EXIT_FAILURE);
-  }
-  else{
-    printf("Success\n");
   }
 }
 
@@ -77,18 +74,29 @@ void getSublock(FILE *img, sublock *sb, int ptStart){
 void getNextInode(FILE *img, inode *inod, char *nextFile, int32_t ptLoc, int32_t zSize){
 }
 
-inode findFile(FILE *img, sublock sb, int32_t ptLoc, char *path){
+loader_tool prep_ldr(inode *inod, sublock sb){
+  loader_tool ldr;
+  ldr.contents = malloc(zSize);
+  ldr.inod = inod;
+  ldr.current_zone = 0;
+  ldr.i_one.zones = malloc(zSize);
+  ldr.i_one.z_idx = 0;
+  ldr.i_two.zones = malloc(zSize);
+  ldr.i_two.z_idx = 0;
+  ldr.z_size = sb.blocksize << log_two_zonesize;
+
+  if(!ldr.contents || !ldr.i_one || !ldr.i_two){
+    perror("malloc");
+    exit(EXIT_FAILURE);
+  }
+}
+
+inode findFile(FILE *img, char *name, loader_tool ldr){
   inode inod;
-  int32_t inodesLoc = 0, zSize = 0;
-  char *input = malloc(sizeof(char) * strlen(path));
-  strcpy(input, path);
-  char *tok = strtok(input, "/");
-  printf("ninodes: %d, i_blocks: %d, z_blocks %d, log_zone_size %d, zones %d, magic %d, blocksize %d\n", sb.ninodes, sb.i_blocks, sb.z_blocks, sb.log_zone_size, sb.zones, sb.magic, sb.blocksize);
+  int32_t inodesLoc = 0;
 
   /* start of partition + boot + super + i_block + z_block gets first inode */
-
   inodesLoc = ptLoc + (2 + sb.i_blocks + sb.z_blocks) * sb.blocksize;
-  printf("inodesLoc: 0x%x\n", inodesLoc);
   if(fseek(img, inodesLoc, SEEK_SET) < 0){
     perror("fseek");
     exit(EXIT_FAILURE);
@@ -99,22 +107,30 @@ inode findFile(FILE *img, sublock sb, int32_t ptLoc, char *path){
     exit(EXIT_FAILURE);
   }
 
-  if(inod.mode & REGULAR_FILE){
-    printf("Regular file\n");
-  }
-  if(inod.mode & DIRECTORY){
-    printf("Directory\n");
-  }
-  printf("mode:%x\n", inod.mode);
+  return inod;
+}
 
-  printf("%s\n", tok);
-  zSize = sb.blocksize << sb.log_zone_size;
-  while((tok = strtok(NULL, "/")) != NULL){
-    printf("%s\n", tok);
-    getNextInode(img, &inod, tok, ptLoc, zSize);
+inode findRoot(FILE *img, sublock sb, int32_t ptLoc){
+  inode inod;
+  int32_t inodesLoc = 0, zSize = 0;
+
+  /* start of partition + boot + super + i_block + z_block gets first inode */
+  inodesLoc = ptLoc + (2 + sb.i_blocks + sb.z_blocks) * sb.blocksize;
+  if(fseek(img, inodesLoc, SEEK_SET) < 0){
+    perror("fseek");
+    exit(EXIT_FAILURE);
   }
-  printf("%s\n", path);
-  free(input);
+
+  if(fread(&inod, sizeof(inode), 1, img) < 1){
+    perror("fread");
+    exit(EXIT_FAILURE);
+  }
+
+  if(!(inod.mode & DIRECTORY)){
+    printf("Failed to find root directory\n");
+    exit(EXIT_FAILURE);
+  }
+
   return inod;
 }
 
@@ -125,12 +141,12 @@ args parse_flags(int argc, char *argv[]){
     a.has_flags = 1;
     switch(opt){
       case('p'):
-        a.ptn = (int)strtol(argv[optind], NULL, 10);
+        a.pt = (int)strtol(argv[optind], NULL, 10);
         a.p_flag = 1;
         optind++;
         break;
       case('s'):
-        a.sptn = (int)strtol(argv[optind], NULL, 10);
+        a.spt = (int)strtol(argv[optind], NULL, 10);
         a.s_flag = 1;
         optind++;
         break;

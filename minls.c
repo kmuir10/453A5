@@ -29,8 +29,8 @@ int main(int argc, char *argv[]){
     printf("v_flag: %d\n", a.v_flag);
     printf("p_flag: %i\n", a.p_flag);
     printf("s_flag: %i\n", a.s_flag);
-    printf("num_of_partitions: %i\n", a.ptn);
-    printf("num_of_sub_partitions: %i\n", a.sptn);
+    printf("num_of_partitions: %i\n", a.pt);
+    printf("num_of_sub_partitions: %i\n", a.spt);
   }
 
 
