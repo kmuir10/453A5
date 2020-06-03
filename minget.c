@@ -4,6 +4,8 @@
 #include <string.h>
 #include "mintool.h"
 
+static args read_input(int argc, char *argv[]);
+
 int main(int argc, char *argv[]){
   char *env = getenv("MY_DEBUG");
   char b510, b511;
@@ -12,18 +14,10 @@ int main(int argc, char *argv[]){
   sublock sb;
   eprintf("%d minget\n", 0);
 
-  /* open the image */
-  int v_flag = 0;
-  int p_flag = 0;
-  int s_flag = 0;
-  char image_buffer[100];
-  char filepath_buffer[100];
-  int num_of_partitions = 0;
-  int num_of_sub_partitions = 0;
-  read_input(argc, argv, image_buffer, filepath_buffer,
-    &v_flag, &p_flag, &s_flag, &num_of_partitions, &num_of_sub_partitions);
+  args a = read_input(argc, argv);
 
-  FILE *img = fopen(image_buffer, "r");
+  /* open the image */
+  FILE *img = fopen(a.image, "r");
 
   if(img == NULL){
     perror("fopen\n");
@@ -31,11 +25,11 @@ int main(int argc, char *argv[]){
   }
   else{
     printf("Such file\n");
-    printf("v_flag: %d\n", v_flag);
-    printf("p_flag: %i\n", p_flag);
-    printf("s_flag: %i\n", s_flag);
-    printf("num_of_partitions: %i\n", num_of_partitions);
-    printf("num_of_sub_partitions: %i\n", num_of_sub_partitions);
+    printf("v_flag: %d\n", a.v_flag);
+    printf("p_flag: %i\n", a.p_flag);
+    printf("s_flag: %i\n", a.s_flag);
+    printf("partition: %i\n", a.ptn);
+    printf("subpartition: %i\n", a.sptn);
   }
   
   eprintf("%d file opened\n", 1);
@@ -57,11 +51,11 @@ int main(int argc, char *argv[]){
   }
 
   /* get the first entry if the user asked for it*/
-  if(p_flag){
+  if(a.p_flag){
     getPtable(img, pt, 0);
   }
   /* stpLoc isn't updated properly yet, fix read_input first to get that from args */
-  if(s_flag){
+  if(a.s_flag){
     getPtable(img, pt, sptLoc);
   }
 
@@ -69,8 +63,39 @@ int main(int argc, char *argv[]){
   getSublock(img, &sb, 0);
   eprintf("magic number: %x\n", sb.magic);
   
-  inode inod = findFile(img, sb, 0, "/usr/src/include/stdio.h");
+  inode inod = findFile(img, sb, 0, a.filepath);
   printf("%d\n", inod.size);
   return 0;
 }
 
+void bad_args(){
+      printf("usage: minget [ -v ] [ -p num [ -s num ] ] imagefile path "
+             "[ destination ]\n");
+      printf("Options\n");
+      printf("-p part --- select partition for filesystem (default: none)\n");
+      printf("-s sub --- select subpartition for filesystem (default: none)\n");
+      printf("-h help --- print usage information and exit\n");
+      printf("-v verbose --- increase verbosity level\n");
+      exit(EXIT_FAILURE);
+}
+
+args read_input(int argc, char *argv[]){
+  args a;
+  if (argc < 2){
+    bad_args();
+  }
+  else{
+    a = parse_flags(argc, argv);
+    if (a.has_flags == 1){
+      a.image = argv[optind++];
+      a.filepath = argv[optind++];
+      a.dest = (optind >= argc) ? NULL : argv[optind];
+    }
+    else{
+      a.image = argv[1];
+      a.filepath = argv[2];
+    }
+
+  }
+  return a;
+}

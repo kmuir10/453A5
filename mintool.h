@@ -7,6 +7,18 @@
 #include <stdint.h>
 #include "debug.h"
 
+typedef struct args{
+  int v_flag;
+  int p_flag;
+  int s_flag;
+  int ptn;
+  int sptn;
+  int has_flags;
+  char *image;
+  char *filepath;
+  char *dest;
+}args;
+
 #define PTABLE_ADDR 0x1BE
 #define SBLOCK_ADDR 1024
 #define MINIX_PTYPE 0x81
@@ -93,14 +105,11 @@ void getNextInode(FILE *img, inode *inod, char *nextFile, int32_t ptLoc, int32_t
 /* get superblock */
 void getSublock(FILE *img, sublock *sb, int ptStart);
 
-/*Read all inputs from terminal*/
-void read_input(int argc, char *argv[], 
-  char image_buffer[100], char filepath_buffer[100], 
-  int *v_flag, int *p_flag, int *s_flag,
-  int *num_of_partitions, int *num_of_sub_partitions);
-
 /* Get an inode from a filepath and superblock */
 inode findFile(FILE *img, sublock sb, int32_t suBlockLoc, char *path);
+
+/* parse v, p, and s options */
+args parse_flags(int argc, char *argv[]);
 
 #endif
 
