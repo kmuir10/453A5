@@ -172,9 +172,8 @@ args parse_flags(int argc, char *argv[]){
   return a;
 }
 
-void seek_read_inode(FILE *img, indir_zone idr, loader ldr, void *tgt){
-  int next_addr = ldr.inodes_loc + (idr.zones[idr.z_idx] - 1) * sizeof(inode);
-  if(fseek(img, next_addr, SEEK_SET) < 0){
+void read_zone(FILE *img, int32_t addr, loader ldr, void *tgt){
+  if(fseek(img, addr, SEEK_SET) < 0){
     perror("fseek");
     exit(EXIT_FAILURE);
   }
@@ -185,16 +184,17 @@ void seek_read_inode(FILE *img, indir_zone idr, loader ldr, void *tgt){
 }
 
 void get_next_indirect(loader ldr, FILE *img){
+  int addr;
   while (ldr.current_zone * ldr.z_size < ldr.inod -> size){
 
     /* Loop through indirect zone contents */
     while (ldr.i1.z_idx < ldr.z_size / sizeof(int32_t)){
       ldr.i1.z_idx++;
-      if (ldr.i1.zones[ldr.i1.z_idx] == 0){
-        ldr.current_zone++;
-      }
-      else{
-        seek_read_inode(img, ldr.i1, ldr, (void *)ldr.contents);
+      ldr.current_zone++;
+      if (ldr.i1.zones[ldr.i1.z_idx] != 0){
+        addr = ldr.inodes_loc + (ldr.i1.zones[ldr.i1.z_idx] - 1) 
+              * sizeof(inode);
+        read_zone(img, addr, ldr, (void *)ldr.contents);
         return;
       }
     }
@@ -202,12 +202,15 @@ void get_next_indirect(loader ldr, FILE *img){
     /* Loop through double indirect zone contents */
     while (ldr.i2.z_idx < ldr.z_size / sizeof(int32_t)){
       ldr.i2.z_idx++;
-      if (ldr.i2.zones[ldr.i2.z_idx] == 0){
-        ldr.current_zone += ldr.z_size;
+      if (ldr.i2.zones[ldr.i2.z_idx] != 0){
+        addr = ldr.inodes_loc + (ldr.i2.zones[ldr.i2.z_idx] - 1) 
+              * sizeof(inode);
+        read_zone(img, addr, ldr, (void *)ldr.i1.zones);
+        ldr.i1.z_idx = 0;
+        break;
       }
       else{
-        seek_read_inode(img, ldr.i2, ldr, (void *)ldr.i1.zones);
-        ldr.i1.z_idx = 0;
+        ldr.current_zone += ldr.z_size / sizeof(int32_t);
       }
     }
   }
@@ -216,14 +219,8 @@ void get_next_indirect(loader ldr, FILE *img){
 
 void get_next_zone(loader ldr, FILE *img){
   if (ldr.current_zone < DIRECT_ZONES){
-    if(fseek(img, ldr.inodes_loc, SEEK_SET) < 0){
-      perror("fseek");
-      exit(EXIT_FAILURE);
-    }
-    if(fread(ldr.contents, sizeof(inode), 1, img) < 1){
-      perror("fread");
-      return;
-    }
+    read_zone(img, ldr.inodes_loc, ldr, (void *)ldr.contents);
+    ldr.current_zone++;
   }
   else{
     get_next_indirect(ldr, img);
