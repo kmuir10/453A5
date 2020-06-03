@@ -226,3 +226,47 @@ void get_next_zone(loader ldr, FILE *img){
     get_next_indirect(ldr, img);
   }
 }
+
+void get_permission(inode* i){
+
+  char permissions[10] = "----------";
+
+  if (i -> mode & FILE_TYPE_MASK){
+    permissions[0] = '-';
+  }
+  else if (i -> mode & REGULAR_FILE_MASK){
+    permissions[0] = '-';
+  }
+  else if (i -> mode & DIRECTORY_MASK){
+    permissions[0] = 'd';
+  }
+  else if (i -> mode & OWNER_READ_MASK){
+    permissions[1] = 'r';
+  }
+  else if (i -> mode & OWNER_WRITE_MASK){
+    permissions[2] = 'w';
+  }
+  else if (i -> mode & OWNER_EXECUTE_MASK){
+    permissions[3] = 'x';
+  }
+  else if (i -> mode & GROUP_EXECUTE_MASK){
+    permissions[4] = 'r';
+  }
+  else if (i -> mode & GROUP_EXECUTE_MASK){
+    permissions[5] = 'w';
+  }
+  else if (i -> mode & GROUP_EXECUTE_MASK){
+    permissions[6] = 'x';
+  }
+  else if (i -> mode & OTHER_EXECUTE_MASK){
+    permissions[7] = 'r';
+  }
+  else if (i -> mode & OTHER_EXECUTE_MASK){
+    permissions[8] = 'w';
+  }
+  else if (i -> mode & OTHER_EXECUTE_MASK){
+    permissions[9] = 'x';
+  }
+
+  printf("Permissions: %s\n", permissions);
+}
