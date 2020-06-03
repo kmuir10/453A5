@@ -79,14 +79,14 @@ loader prep_ldr(sublock sb, int32_t pt_loc){
   ldr.inod = malloc(sizeof(inode));
   ldr.current_zone = 0;
   ldr.z_size = sb.blocksize << sb.log_zone_size;
-  ldr.i_one.z_idx = 0;
-  ldr.i_one.zones = malloc(ldr.z_size);
-  ldr.i_two.z_idx = 0;
-  ldr.i_two.zones = malloc(ldr.z_size);
+  ldr.i1.z_idx = 0;
+  ldr.i1.zones = malloc(ldr.z_size);
+  ldr.i2.z_idx = 0;
+  ldr.i2.zones = malloc(ldr.z_size);
   ldr.contents = malloc(ldr.z_size);
   ldr.inodes_loc = pt_loc + (2 + sb.i_blocks + sb.z_blocks) * sb.blocksize;
   
-  if(!ldr.contents || !ldr.i_one.zones || !ldr.i_two.zones || !ldr.inod){
+  if(!ldr.contents || !ldr.i1.zones || !ldr.i2.zones || !ldr.inod){
     perror("malloc");
     exit(EXIT_FAILURE);
   }
@@ -183,8 +183,8 @@ void get_next_indirect(loader ldr, FILE *img){
       return;
     }
 
-    while (ldr.i_one.z_idx < ldr.z_size / sizeof(int32_t)){
-      if (ldr.i_one.zones[ldr.i_one.z_idx] == 0){
+    while (ldr.i1.z_idx < ldr.z_size / sizeof(int32_t)){
+      if (ldr.i1.zones[ldr.i1.z_idx] == 0){
         (ldr.current_zone)++;
       }
       else{
@@ -200,8 +200,8 @@ void get_next_indirect(loader ldr, FILE *img){
       }
     }
 
-    while (ldr.i_two.z_idx < ldr.z_size / sizeof(int32_t)){
-      if (ldr.i_one.zones[ldr.i_two.z_idx] == 0){
+    while (ldr.i2.z_idx < ldr.z_size / sizeof(int32_t)){
+      if (ldr.i1.zones[ldr.i2.z_idx] == 0){
         (ldr.current_zone)++;
       }
       else{

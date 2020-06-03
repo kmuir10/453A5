@@ -115,8 +115,8 @@ typedef struct loader{
   char *contents;
   inode *inod;
   int32_t current_zone;
-  indir_zone i_one;
-  indir_zone i_two;
+  indir_zone i1;
+  indir_zone i2;
   int32_t z_size;
   int32_t inodes_loc;
 }loader;
