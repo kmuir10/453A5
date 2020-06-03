@@ -43,6 +43,7 @@ int main(int argc, char *argv[]){
   loader ldr = prep_ldr(sb, ptLoc);
   findRoot(img, ldr);
   
+  
   return 0;
 }
 
