@@ -173,36 +173,61 @@ args parse_flags(int argc, char *argv[]){
 }
 
 void get_next_indirect(loader ldr, FILE *img){
-  while (1){
-    if(fread(ldr.inod, sizeof(inode), ldr.current_zone, img) < 1){
+  while (ldr.current_zone * ldr.z_size < ldr.inod -> size){
+    if(fseek(img, ldr.inodes_loc, SEEK_SET) < 0){
+      perror("fseek");
+      exit(EXIT_FAILURE);
+    }
+    if(fread(ldr.inod, sizeof(inode), 1, img) < 1){
       perror("fread");
       return;
     }
 
     while (ldr.i_one.z_idx < ldr.z_size / sizeof(int32_t)){
-      if (ldr.i_one.z_idx == 0){
+      if (ldr.i_one.zones[ldr.i_one.z_idx] == 0){
         (ldr.current_zone)++;
       }
       else{
-        fread(ldr.inod, sizeof(inode), ldr.current_zone, img);
+        if(fseek(img, ldr.inodes_loc, SEEK_SET) < 0){
+          perror("fseek");
+          exit(EXIT_FAILURE);
+        }
+        if(fread(ldr.inod, sizeof(inode), 1, img) < 1){
+          perror("fread");
+          return;
+        }
         return;
       }
     }
 
     while (ldr.i_two.z_idx < ldr.z_size / sizeof(int32_t)){
-      if (ldr.i_two.z_idx == 0){
+      if (ldr.i_one.zones[ldr.i_two.z_idx] == 0){
         (ldr.current_zone)++;
       }
       else{
-        fread(ldr.inod, sizeof(inode), ldr.current_zone, img);
+        if(fseek(img, ldr.inodes_loc, SEEK_SET) < 0){
+          perror("fseek");
+          exit(EXIT_FAILURE);
+        }
+        if(fread(ldr.inod, sizeof(inode), 1, img) < 1){
+          perror("fread");
+          return;
+        }
       }
     }
   }
 }
 
 void get_next_zone(loader ldr, FILE *img){
-  if (ldr.current_zone < 7){
-    fread(ldr.contents, sizeof(inode), (ldr.current_zone)++, img);
+  if (ldr.current_zone < DIRECT_ZONES){
+    if(fseek(img, ldr.inodes_loc, SEEK_SET) < 0){
+      perror("fseek");
+      exit(EXIT_FAILURE);
+    }
+    if(fread(ldr.contents, sizeof(inode), 1, img) < 1){
+      perror("fread");
+      return;
+    }
   }
   else{
     get_next_indirect(ldr, img);
