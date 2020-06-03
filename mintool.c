@@ -76,36 +76,53 @@ void getNextInode(FILE *img, inode *inod, char *nextFile, int32_t ptLoc, int32_t
 
 loader prep_ldr(sublock sb, int32_t pt_loc){
   loader ldr;
-  ldr.contents = malloc(zSize);
   ldr.inod = malloc(sizeof(inode));
   ldr.current_zone = 0;
-  ldr.i_one.zones = malloc(zSize);
+  ldr.z_size = sb.blocksize << sb.log_zone_size;
   ldr.i_one.z_idx = 0;
-  ldr.i_two.zones = malloc(zSize);
+  ldr.i_one.zones = malloc(ldr.z_size);
   ldr.i_two.z_idx = 0;
-  ldr.z_size = sb.blocksize << log_two_zonesize;
-  ldr.inodes_loc = ptLoc + (2 + sb.i_blocks + sb.z_blocks) * sb.blocksize;
+  ldr.i_two.zones = malloc(ldr.z_size);
+  ldr.contents = malloc(ldr.z_size);
+  ldr.inodes_loc = pt_loc + (2 + sb.i_blocks + sb.z_blocks) * sb.blocksize;
   
-  if(!ldr.contents || !ldr.i_one || !ldr.i_two || ldr.inode){
+  if(!ldr.contents || !ldr.i_one.zones || !ldr.i_two.zones || !ldr.inod){
     perror("malloc");
     exit(EXIT_FAILURE);
   }
+  return ldr;
 }
 
-inode findFile(FILE *img, char *name, loader ldr){
-  inode inod;
+inode *search_dir(FILE *img, char *tok, loader ldr){
+  return NULL;
+}
+
+void findFile(FILE *img, char *path, loader ldr){
+  char *tokenized = malloc(strlen(path));
+  char *tok;
+  printf("bleh\n");
+  if(!tokenized){
+    perror("malloc");
+    exit(EXIT_FAILURE);
+  }
+  tok = strtok(tokenized, "/");
+  while((tok = strtok(NULL, "/")) != NULL){
+    if(search_dir(img, tok, ldr) == NULL){
+      printf("File not found\n");
+      exit(EXIT_FAILURE);
+    }
+  }
 
   if(fseek(img, ldr.inodes_loc, SEEK_SET) < 0){
     perror("fseek");
     exit(EXIT_FAILURE);
   }
 
-  if(fread(&inod, sizeof(inode), 1, img) < 1){
+  if(fread(ldr.inod, sizeof(inode), 1, img) < 1){
     perror("fread");
     exit(EXIT_FAILURE);
   }
-
-  return inod;
+  free(tokenized);
 }
 
 void findRoot(FILE *img, loader ldr){

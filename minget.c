@@ -42,7 +42,7 @@ int main(int argc, char *argv[]){
   
   loader ldr = prep_ldr(sb, ptLoc);
   findRoot(img, ldr);
-  
+  findFile(img, a.filepath, ldr);
   
   return 0;
 }
