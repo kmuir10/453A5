@@ -155,3 +155,38 @@ args parse_flags(int argc, char *argv[]){
   return a;
 }
 
+void get_next_indirect(loader ldr, FILE *img){
+  while (1){
+    if(fread(ldr.inod, sizeof(inode), ldr -> current_zone, img) < 1){
+      perror("fread");
+      return NULL;
+    }
+
+    while (ldr.i_one.z_idx < ldr.z_size / sizeof(int32)){
+      if (ldr.i_one.z_idx == 0){
+
+      }
+      else{
+
+      }
+    }
+
+    while (ldr.i_two.z_idx < ldr.z_size / sizeof(int32)){
+      if (ldr.i_two.z_idx == 0){
+        
+      }
+      else{
+        
+      }
+    }
+  }
+}
+
+void get_next_zone(loader ldr, FILE *img){
+  if (ldr.current_zone < 7){
+    
+  }
+  else{
+    get_next_indirect(ldr, img)
+  }
+}
