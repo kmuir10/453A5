@@ -174,26 +174,27 @@ args parse_flags(int argc, char *argv[]){
 
 void get_next_indirect(loader ldr, FILE *img){
   while (1){
-    if(fread(ldr.inod, sizeof(inode), ldr -> current_zone, img) < 1){
+    if(fread(ldr.inod, sizeof(inode), ldr.current_zone, img) < 1){
       perror("fread");
-      return NULL;
+      return;
     }
 
-    while (ldr.i_one.z_idx < ldr.z_size / sizeof(int32)){
+    while (ldr.i_one.z_idx < ldr.z_size / sizeof(int32_t)){
       if (ldr.i_one.z_idx == 0){
-
+        (ldr.current_zone)++;
       }
       else{
-
+        fread(ldr.inod, sizeof(inode), ldr.current_zone, img);
+        return;
       }
     }
 
-    while (ldr.i_two.z_idx < ldr.z_size / sizeof(int32)){
+    while (ldr.i_two.z_idx < ldr.z_size / sizeof(int32_t)){
       if (ldr.i_two.z_idx == 0){
-        
+        (ldr.current_zone)++;
       }
       else{
-        
+        fread(ldr.inod, sizeof(inode), ldr.current_zone, img);
       }
     }
   }
@@ -201,9 +202,9 @@ void get_next_indirect(loader ldr, FILE *img){
 
 void get_next_zone(loader ldr, FILE *img){
   if (ldr.current_zone < 7){
-    
+    fread(ldr.contents, sizeof(inode), (ldr.current_zone)++, img);
   }
   else{
-    get_next_indirect(ldr, img)
+    get_next_indirect(ldr, img);
   }
 }
