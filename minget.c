@@ -72,6 +72,7 @@ args read_input(int argc, char *argv[]){
     else{
       a.image = argv[1];
       a.filepath = argv[2];
+      a.dest = (argc == 4) ? argv[3] : NULL;
     }
 
   }
