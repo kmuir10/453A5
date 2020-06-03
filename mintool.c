@@ -172,50 +172,46 @@ args parse_flags(int argc, char *argv[]){
   return a;
 }
 
+void seek_read_inode(FILE *img, indir_zone idr, loader ldr, void *tgt){
+  int next_addr = ldr.inodes_loc + (idr.zones[idr.z_idx] - 1) * sizeof(inode);
+  if(fseek(img, next_addr, SEEK_SET) < 0){
+    perror("fseek");
+    exit(EXIT_FAILURE);
+  }
+  if(fread(tgt, ldr.z_size, 1, img) < 1){
+    perror("fread");
+    exit(EXIT_FAILURE);
+  }
+}
+
 void get_next_indirect(loader ldr, FILE *img){
   while (ldr.current_zone * ldr.z_size < ldr.inod -> size){
-    if(fseek(img, ldr.inodes_loc, SEEK_SET) < 0){
-      perror("fseek");
-      exit(EXIT_FAILURE);
-    }
-    if(fread(ldr.inod, sizeof(inode), 1, img) < 1){
-      perror("fread");
-      return;
-    }
 
+    /* Loop through indirect zone contents */
     while (ldr.i1.z_idx < ldr.z_size / sizeof(int32_t)){
+      ldr.i1.z_idx++;
       if (ldr.i1.zones[ldr.i1.z_idx] == 0){
-        (ldr.current_zone)++;
+        ldr.current_zone++;
       }
       else{
-        if(fseek(img, ldr.inodes_loc, SEEK_SET) < 0){
-          perror("fseek");
-          exit(EXIT_FAILURE);
-        }
-        if(fread(ldr.inod, sizeof(inode), 1, img) < 1){
-          perror("fread");
-          return;
-        }
+        seek_read_inode(img, ldr.i1, ldr, (void *)ldr.contents);
         return;
       }
     }
 
+    /* Loop through double indirect zone contents */
     while (ldr.i2.z_idx < ldr.z_size / sizeof(int32_t)){
-      if (ldr.i1.zones[ldr.i2.z_idx] == 0){
-        (ldr.current_zone)++;
+      ldr.i2.z_idx++;
+      if (ldr.i2.zones[ldr.i2.z_idx] == 0){
+        ldr.current_zone += ldr.z_size;
       }
       else{
-        if(fseek(img, ldr.inodes_loc, SEEK_SET) < 0){
-          perror("fseek");
-          exit(EXIT_FAILURE);
-        }
-        if(fread(ldr.inod, sizeof(inode), 1, img) < 1){
-          perror("fread");
-          return;
-        }
+        seek_read_inode(img, ldr.i2, ldr, (void *)ldr.i1.zones);
+        ldr.i1.z_idx = 0;
       }
     }
   }
+  return;
 }
 
 void get_next_zone(loader ldr, FILE *img){
