@@ -110,15 +110,15 @@ typedef struct indir_zone{
   uint32_t z_idx;
 }indir_zone;
 
-typedef struct loader_tool{
+typedef struct loader{
   char *contents;
   inode *inod;
   int32_t current_zone;
   indir_zone i_one;
   indir_zone i_two;
   int32_t z_size;
-  int32_t pt_loc;
-}loader_tool;
+  int32_t inodes_loc;
+}loader;
 
 /* Get the root inode of a filesystem */
 inode findRoot(FILE *img, sublock sb, int32_t suBlockLoc);

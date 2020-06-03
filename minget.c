@@ -40,7 +40,9 @@ int main(int argc, char *argv[]){
   getSublock(img, &sb, ptLoc);
   eprintf("magic number: %x\n", sb.magic);
   
-  inode inod = findFile(img, sb, ptLoc, a.filepath);
+  loader ldr = prep_ldr(sb, ptLoc);
+  findRoot(img, ldr);
+  
   return 0;
 }
 

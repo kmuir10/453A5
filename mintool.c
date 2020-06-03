@@ -74,30 +74,28 @@ void getSublock(FILE *img, sublock *sb, int ptStart){
 void getNextInode(FILE *img, inode *inod, char *nextFile, int32_t ptLoc, int32_t zSize){
 }
 
-loader_tool prep_ldr(inode *inod, sublock sb){
-  loader_tool ldr;
+loader prep_ldr(sublock sb, int32_t pt_loc){
+  loader ldr;
   ldr.contents = malloc(zSize);
-  ldr.inod = inod;
+  ldr.inod = malloc(sizeof(inode));
   ldr.current_zone = 0;
   ldr.i_one.zones = malloc(zSize);
   ldr.i_one.z_idx = 0;
   ldr.i_two.zones = malloc(zSize);
   ldr.i_two.z_idx = 0;
   ldr.z_size = sb.blocksize << log_two_zonesize;
-
-  if(!ldr.contents || !ldr.i_one || !ldr.i_two){
+  ldr.inodes_loc = ptLoc + (2 + sb.i_blocks + sb.z_blocks) * sb.blocksize;
+  
+  if(!ldr.contents || !ldr.i_one || !ldr.i_two || ldr.inode){
     perror("malloc");
     exit(EXIT_FAILURE);
   }
 }
 
-inode findFile(FILE *img, char *name, loader_tool ldr){
+inode findFile(FILE *img, char *name, loader ldr){
   inode inod;
-  int32_t inodesLoc = 0;
 
-  /* start of partition + boot + super + i_block + z_block gets first inode */
-  inodesLoc = ptLoc + (2 + sb.i_blocks + sb.z_blocks) * sb.blocksize;
-  if(fseek(img, inodesLoc, SEEK_SET) < 0){
+  if(fseek(img, ldr.inodes_loc, SEEK_SET) < 0){
     perror("fseek");
     exit(EXIT_FAILURE);
   }
@@ -110,28 +108,21 @@ inode findFile(FILE *img, char *name, loader_tool ldr){
   return inod;
 }
 
-inode findRoot(FILE *img, sublock sb, int32_t ptLoc){
-  inode inod;
-  int32_t inodesLoc = 0, zSize = 0;
-
-  /* start of partition + boot + super + i_block + z_block gets first inode */
-  inodesLoc = ptLoc + (2 + sb.i_blocks + sb.z_blocks) * sb.blocksize;
-  if(fseek(img, inodesLoc, SEEK_SET) < 0){
+void findRoot(FILE *img, loader ldr){
+  if(fseek(img, ldr.inodes_loc, SEEK_SET) < 0){
     perror("fseek");
     exit(EXIT_FAILURE);
   }
 
-  if(fread(&inod, sizeof(inode), 1, img) < 1){
+  if(fread(ldr.inod, sizeof(inode), 1, img) < 1){
     perror("fread");
     exit(EXIT_FAILURE);
   }
 
-  if(!(inod.mode & DIRECTORY)){
+  if(!(ldr.inod->mode & DIRECTORY)){
     printf("Failed to find root directory\n");
     exit(EXIT_FAILURE);
   }
-
-  return inod;
 }
 
 args parse_flags(int argc, char *argv[]){
