@@ -13,6 +13,48 @@ path argument is ommitted it defaults to the root directory.*/
 void bad_args();
 args read_input(int argc, char *argv[]);
 
+void get_permission(inode* i, char* perm){
+
+  char permissions[PERMISSION_SIZE + 1];
+  memset(permissions, '-', PERMISSION_SIZE);
+  permissions[PERMISSION_SIZE] = 0;
+
+  if (i -> mode & DIRECTORY_MASK){
+    permissions[DIRECTORY_INDEX] = 'd';
+  }
+  if (i -> mode & OWNER_READ_MASK){
+    permissions[OWNER_READ] = 'r';
+  }
+  if (i -> mode & OWNER_WRITE_MASK){
+    permissions[OWNER_WRITE] = 'w';
+  }
+  if (i -> mode & OWNER_EXECUTE_MASK){
+    permissions[OWNER_EXECUTE] = 'x';
+  }
+  if (i -> mode & GROUP_READ_MASK){
+    permissions[GROUP_READ] = 'r';
+  }
+  if (i -> mode & GROUP_WRITE_MASK){
+    permissions[GROUP_WRITE] = 'w';
+  }
+  if (i -> mode & GROUP_EXECUTE_MASK){
+    permissions[GROUP_EXECUTE] = 'x';
+  }
+  if (i -> mode & OTHER_READ_MASK){
+    permissions[OTHER_READ] = 'r';
+  }
+  if (i -> mode & OTHER_WRITE_MASK){
+    permissions[OTHER_WRITE] = 'w';
+  }
+  if (i -> mode & OTHER_EXECUTE_MASK){
+    permissions[OTHER_EXECUTE] = 'x';
+  }
+
+  printf("Permissions: %s\n", permissions);
+
+  strcpy(perm, permissions);
+}
+
 int main(int argc, char *argv[]){  
   
   args a = read_input(argc, argv);
@@ -44,6 +86,8 @@ int main(int argc, char *argv[]){
   struct loader *ldr = malloc(sizeof(loader));
   uint32_t inode_num = 0;
   load_inode(img, ldr, inode_num);
+  char perm[PERMISSION_SIZE + 1];
+  get_permission(ldr -> inod, perm);
 
   if (a.v_flag == 1){
   	/*Print the partition, superblock, and inode to stderr*/
@@ -75,7 +119,7 @@ int main(int argc, char *argv[]){
    	fprintf(stderr, "subversion: %u\n", sb -> subversion);
 
    	fprintf(stderr, "Inode:\n");
-   	fprintf(stderr, "mode: %u\n", ldr -> inod -> mode);
+   	fprintf(stderr, "mode: %s\n", perm);
    	fprintf(stderr, "links: %u\n", ldr -> inod -> links);
    	fprintf(stderr, "uid: %u\n", ldr -> inod -> uid);
    	fprintf(stderr, "gid: %u\n", ldr -> inod -> gid);
@@ -86,7 +130,7 @@ int main(int argc, char *argv[]){
    	fprintf(stderr, "DIRECT_ZONES: %u\n", DIRECT_ZONES);
    	int i = 0;
    	for (i = 0; i < DIRECT_ZONES; i++){
-
+   		fprintf(stderr, "zone[%i]: %u\n", i, ldr -> inod -> zone[i]);
    	}
   }
   
@@ -122,5 +166,6 @@ void bad_args(){
       printf("-v verbose --- increase verbosity level\n");
       exit(EXIT_FAILURE);
 }
+
 
 
