@@ -149,6 +149,7 @@ typedef struct loader{
   int32_t pt_loc;
   int all_loaded;
   int found;
+  int empty_count;
 }loader;
 
 /* Get the root inode of a filesystem */

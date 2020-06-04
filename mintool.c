@@ -83,6 +83,7 @@ loader *prep_ldr(sublock sb, int32_t pt_loc){
   ldr->pt_loc = pt_loc;
   ldr->all_loaded = 0;
   ldr->found = 0;
+  ldr->empty_count = 0;
   
   return ldr;
 }
@@ -115,6 +116,7 @@ void load_inode(FILE *img, loader *ldr, uint32_t inode_num){
 
 void get_next_indirect(loader *ldr, FILE *img){
   int addr;
+  ldr->empty_count = 0;
   while (ldr->current_zone * ldr->z_size < ldr->inod -> size){
 
     /* Loop through indirect zone contents */
@@ -126,6 +128,7 @@ void get_next_indirect(loader *ldr, FILE *img){
         ldr->current_zone++;
         return;
       }
+      ldr->empty_count++;
       ldr->i1.z_idx++;
       ldr->current_zone++;
     }
@@ -138,6 +141,7 @@ void get_next_indirect(loader *ldr, FILE *img){
         ldr->i1.z_idx = 0;
         break;
       }
+      ldr->empty_count += ldr->z_size / sizeof(int32_t);
       ldr->i2.z_idx++;
       ldr->current_zone += ldr->z_size / sizeof(int32_t);
     }
@@ -150,7 +154,6 @@ void get_next_zone(loader *ldr, FILE *img){
   if (ldr->current_zone < DIRECT_ZONES){
     addr = ldr->pt_loc + ldr->inod->zone[ldr->current_zone] * ldr->z_size;
     read_zone(img, addr, ldr, (void *)ldr->contents);
-    printf("current zone: %d\n", ldr->current_zone);
     ldr->current_zone++;
     if(ldr->current_zone * ldr->z_size > ldr->inod->size){
       ldr->all_loaded = 1;
@@ -165,6 +168,9 @@ uint32_t search_zone(FILE *img, char *tok, loader *ldr){
   int i;
   dirent *entries = (dirent *)ldr->contents;
   for(i = 0; i < ldr->z_size / sizeof(dirent); i++){
+    if(entries[i].inode == 0){
+      continue;
+    }
     if(strcmp(tok, entries[i].name) == 0){
       ldr->found = 1;
       return entries[i].inode;

@@ -6,6 +6,10 @@
 
 args read_input(int argc, char *argv[]);
 
+int min(int a, int b){
+  return a < b ? a : b;
+}
+
 int main(int argc, char *argv[]){
   char *env = getenv("MY_DEBUG");
   partent pt_table[4];
@@ -16,11 +20,23 @@ int main(int argc, char *argv[]){
   args a = read_input(argc, argv);
 
   /* open the image */
+  FILE *dest;
   FILE *img = fopen(a.image, "r");
 
   if(img == NULL){
     perror("fopen\n");
     exit(EXIT_FAILURE);
+  }
+
+  if(a.dest != NULL){
+    dest = fopen(a.dest, "w");
+    if(dest == NULL){
+      perror("fopen");
+      exit(EXIT_FAILURE);
+    }
+  }
+  else{
+    dest = fopen("/dev/stdout", "w");
   }
 
   /* get the first partition table if requested
@@ -41,15 +57,28 @@ int main(int argc, char *argv[]){
   eprintf("magic number: %x\n", sb.magic);
   
   loader *ldr = prep_ldr(sb, ptLoc);
+
+  char *empty = safe_malloc(ldr->z_size);
+  memset(empty, 0, ldr->z_size);
+
   findRoot(img, ldr);
   findFile(img, a.filepath, ldr);
+  int left_to_print = ldr->inod->size, to_print_now;
   if(ldr->inod->mode & DIRECTORY_MASK){
     printf("I'm a directory, dummy\n");
     exit(EXIT_FAILURE);
   }
   while(!ldr->all_loaded){
     get_next_zone(ldr, img);
-    fwrite(ldr->contents, sizeof(char), ldr->z_size, stdout);
+    int i;
+    for(i = 0; i < ldr->empty_count; i++){
+      printf("writing empty\n");
+      fwrite(empty, sizeof(char), ldr->z_size, dest);
+      left_to_print -= ldr->z_size;
+    }
+    to_print_now = min(left_to_print, ldr->z_size);
+    fwrite(ldr->contents, sizeof(char), to_print_now, dest);
+    left_to_print -= to_print_now;
   }
   
   return 0;
