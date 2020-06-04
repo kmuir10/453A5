@@ -13,6 +13,8 @@ path argument is ommitted it defaults to the root directory.*/
 void bad_args();
 args read_input(int argc, char *argv[]);
 
+int i = 0;
+
 void get_permission(inode* i, char* perm){
 
   char permissions[PERMISSION_SIZE + 1];
@@ -77,17 +79,27 @@ int main(int argc, char *argv[]){
 
   /*Get Partition Table*/
 
+  printf("A\n");
+
   struct partent *pt = safe_malloc(sizeof(partent));
   getPtable(img, pt, a.pt);
+
+  printf("B\n");
 
   struct sublock *sb = safe_malloc(sizeof(sublock));
   getSublock(img, sb, a.pt);
 
+  printf("C\n");
+
   struct loader *ldr = safe_malloc(sizeof(loader));
   uint32_t inode_num = 0;
+  printf("C1\n");
   load_inode(img, ldr, inode_num);
+  printf("C2\n");
   char perm[PERMISSION_SIZE + 1];
   get_permission(ldr -> inod, perm);
+
+  printf("D\n");
 
   if (a.v_flag == 1){
   	/*Print the partition, superblock, and inode to stderr*/
@@ -128,7 +140,6 @@ int main(int argc, char *argv[]){
    	fprintf(stderr, "mtime: %u\n", ldr -> inod -> mtime);
    	fprintf(stderr, "ctime: %u\n", ldr -> inod -> ctime);
    	fprintf(stderr, "DIRECT_ZONES: %u\n", DIRECT_ZONES);
-   	int i = 0;
    	for (i = 0; i < DIRECT_ZONES; i++){
    		fprintf(stderr, "zone[%i]: %u\n", i, ldr -> inod -> zone[i]);
    	}
@@ -144,10 +155,24 @@ int main(int argc, char *argv[]){
     /*print all files info*/
 
     //search_dir and search zone (refactor both of them)
+    dirent *entries = (dirent *)ldr->contents;
+
+    for(i = 0; i < ldr->z_size / sizeof(dirent); i++){
+      if(entries[i].inode != 0){
+        printf("Entry: %s\n", entries[i].name);
+      }
+    }
+
+    while(!ldr->all_loaded){
+      get_next_zone(ldr, img);
+      get_permission(ldr -> inod, perm);
+      printf("%s %d\n", perm, ldr -> inod -> size); 
+    }
   }
   else{
     /*Is a file*/
     /*Print mode, size, and filename*/
+    get_permission(ldr -> inod, perm);
     printf("%s %d %s\n", perm, ldr -> inod -> size, a.filepath);
   }
 
