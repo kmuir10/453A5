@@ -33,6 +33,18 @@ typedef struct args{
 #define OTHER_WRITE_MASK 0000002
 #define OTHER_EXECUTE_MASK 0000001
 
+#define PERMISSION_SIZE 10
+#define DIRECTORY_INDEX 0
+#define OWNER_READ 1
+#define OWNER_WRITE 2
+#define OWNER_EXECUTE 3
+#define GROUP_READ 4
+#define GROUP_WRITE 5
+#define GROUP_EXECUTE 6
+#define OTHER_READ 7
+#define OTHER_WRITE 8
+#define OTHER_EXECUTE 9
+
 #define PTABLE_ADDR 0x1BE
 #define SBLOCK_ADDR 1024
 #define MINIX_PTYPE 0x81

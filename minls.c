@@ -33,8 +33,63 @@ int main(int argc, char *argv[]){
     printf("num_of_sub_partitions: %i\n", a.spt);
   }
 
-
   /*Get Partition Table*/
+
+  struct partent *pt = malloc(sizeof(partent));
+  getPtable(img, pt, a.pt);
+
+  struct sublock *sb = malloc(sizeof(sublock));
+  getSublock(img, sb, a.pt);
+
+  struct loader *ldr = malloc(sizeof(loader));
+  uint32_t inode_num = 0;
+  load_inode(img, ldr, inode_num);
+
+  if (a.v_flag == 1){
+  	/*Print the partition, superblock, and inode to stderr*/
+  	fprintf(stderr, "Partition:\n");
+  	fprintf(stderr, "bootind: %u\n", pt -> bootind);
+  	fprintf(stderr, "start_head: %u\n", pt -> start_head);
+   	fprintf(stderr, "start_sec: %u\n", pt -> start_sec);
+   	fprintf(stderr, "start_cyl: %u\n", pt -> start_cyl);
+   	fprintf(stderr, "type: %u\n", pt -> type);
+   	fprintf(stderr, "end_head: %u\n", pt -> end_head);
+   	fprintf(stderr, "end_sec: %u\n", pt -> end_sec);
+   	fprintf(stderr, "end_cyl: %u\n", pt -> end_cyl);
+   	fprintf(stderr, "lFirst: %u\n", pt -> lFirst);
+   	fprintf(stderr, "size: %u\n", pt -> size);
+
+   	fprintf(stderr, "Superblock:\n");
+   	fprintf(stderr, "ninodes: %u\n", sb -> ninodes);
+   	fprintf(stderr, "pad1: %u\n", sb -> pad1);
+   	fprintf(stderr, "i_blocks: %u\n", sb -> i_blocks);
+   	fprintf(stderr, "z_blocks: %u\n", sb -> z_blocks);
+   	fprintf(stderr, "firstdata: %u\n", sb -> firstdata);
+   	fprintf(stderr, "log_zone_size: %u\n", sb -> log_zone_size);
+   	fprintf(stderr, "pad2: %u\n", sb -> pad2);
+   	fprintf(stderr, "max_file: %u\n", sb -> max_file);
+   	fprintf(stderr, "zones: %u\n", sb -> zones);
+   	fprintf(stderr, "magic: %u\n", sb -> magic);
+   	fprintf(stderr, "pad3: %u\n", sb -> pad3);
+   	fprintf(stderr, "blocksize: %u\n", sb -> blocksize);
+   	fprintf(stderr, "subversion: %u\n", sb -> subversion);
+
+   	fprintf(stderr, "Inode:\n");
+   	fprintf(stderr, "mode: %u\n", ldr -> inod -> mode);
+   	fprintf(stderr, "links: %u\n", ldr -> inod -> links);
+   	fprintf(stderr, "uid: %u\n", ldr -> inod -> uid);
+   	fprintf(stderr, "gid: %u\n", ldr -> inod -> gid);
+   	fprintf(stderr, "size: %u\n", ldr -> inod -> size);
+   	fprintf(stderr, "atime: %u\n", ldr -> inod -> atime);
+   	fprintf(stderr, "mtime: %u\n", ldr -> inod -> mtime);
+   	fprintf(stderr, "ctime: %u\n", ldr -> inod -> ctime);
+   	fprintf(stderr, "DIRECT_ZONES: %u\n", DIRECT_ZONES);
+   	int i = 0;
+   	for (i = 0; i < DIRECT_ZONES; i++){
+
+   	}
+  }
+  
 
   /*Get Superblock contents*/
 

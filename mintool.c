@@ -262,39 +262,39 @@ args parse_flags(int argc, char *argv[]){
 
 void get_permission(inode* i){
 
-  char permissions[11];
-  memset(permissions, '-', 10);
-  permissions[10] = 0;
+  char permissions[PERMISSION_SIZE + 1];
+  memset(permissions, '-', PERMISSION_SIZE);
+  permissions[PERMISSION_SIZE] = 0;
 
   if (i -> mode & DIRECTORY_MASK){
-    permissions[0] = 'd';
+    permissions[DIRECTORY_INDEX] = 'd';
   }
   if (i -> mode & OWNER_READ_MASK){
-    permissions[1] = 'r';
+    permissions[OWNER_READ] = 'r';
   }
   if (i -> mode & OWNER_WRITE_MASK){
-    permissions[2] = 'w';
+    permissions[OWNER_WRITE] = 'w';
   }
   if (i -> mode & OWNER_EXECUTE_MASK){
-    permissions[3] = 'x';
+    permissions[OWNER_EXECUTE] = 'x';
   }
   if (i -> mode & GROUP_READ_MASK){
-    permissions[4] = 'r';
+    permissions[GROUP_READ] = 'r';
   }
   if (i -> mode & GROUP_WRITE_MASK){
-    permissions[5] = 'w';
+    permissions[GROUP_WRITE] = 'w';
   }
   if (i -> mode & GROUP_EXECUTE_MASK){
-    permissions[6] = 'x';
+    permissions[GROUP_EXECUTE] = 'x';
   }
   if (i -> mode & OTHER_READ_MASK){
-    permissions[7] = 'r';
+    permissions[OTHER_READ] = 'r';
   }
   if (i -> mode & OTHER_WRITE_MASK){
-    permissions[8] = 'w';
+    permissions[OTHER_WRITE] = 'w';
   }
   if (i -> mode & OTHER_EXECUTE_MASK){
-    permissions[9] = 'x';
+    permissions[OTHER_EXECUTE] = 'x';
   }
 
   printf("Permissions: %s\n", permissions);
