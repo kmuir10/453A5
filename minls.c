@@ -159,14 +159,17 @@ int main(int argc, char *argv[]){
 
     for(i = 0; i < ldr->z_size / sizeof(dirent); i++){
       if(entries[i].inode != 0){
-        printf("Entry: %s\n", entries[i].name);
+        //printf("Entry: %s\n", entries[i].name);
       }
     }
 
+    int idx = 0;
     while(!ldr->all_loaded){
       get_next_zone(ldr, img);
       get_permission(ldr -> inod, perm);
-      printf("%s %d\n", perm, ldr -> inod -> size); 
+      printf("%s %d %s\n", perm, ldr -> inod -> size,
+        entries[idx].name); 
+      idx++;
     }
   }
   else{
