@@ -132,12 +132,24 @@ int main(int argc, char *argv[]){
    	for (i = 0; i < DIRECT_ZONES; i++){
    		fprintf(stderr, "zone[%i]: %u\n", i, ldr -> inod -> zone[i]);
    	}
+    fprintf(stderr, "indirect: %u\n", ldr -> inod -> indirect);
+    fprintf(stderr, "two_indirect: %u\n", ldr -> inod -> two_indirect);
+    fprintf(stderr, "unused: %u\n", ldr -> inod -> unused);
   }
   
+  findFile(img, a.filepath, ldr);
 
-  /*Get Superblock contents*/
+  if (ldr -> inod -> mode & DIRECTORY_MASK){
+    /*Is a directory*/
+    /*print all files info*/
 
-  /*Get File Inode contents*/
+    //search_dir and search zone (refactor both of them)
+  }
+  else{
+    /*Is a file*/
+    /*Print mode, size, and filename*/
+    printf("%s %d %s\n", perm, ldr -> inod -> size, a.filepath);
+  }
 
   return 0;
 }
