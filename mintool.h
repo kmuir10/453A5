@@ -100,7 +100,7 @@ typedef struct inode{
 /* directory entry */
 typedef struct dirent{
   uint32_t inode;
-  unsigned char name[60];
+  char name[60];
 }dirent;
 
 /* swap endianness */
@@ -135,6 +135,7 @@ typedef struct loader{
   int32_t inodes_loc;
   int32_t pt_loc;
   int all_loaded;
+  int found;
 }loader;
 
 /* Get the root inode of a filesystem */

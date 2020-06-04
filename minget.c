@@ -48,24 +48,27 @@ int main(int argc, char *argv[]){
 }
 
 void bad_args(){
-      printf("usage: minget [ -v ] [ -p num [ -s num ] ] imagefile path "
-             "[ destination ]\n");
-      printf("Options\n");
-      printf("-p part --- select partition for filesystem (default: none)\n");
-      printf("-s sub --- select subpartition for filesystem (default: none)\n");
-      printf("-h help --- print usage information and exit\n");
-      printf("-v verbose --- increase verbosity level\n");
-      exit(EXIT_FAILURE);
+  printf("usage: minget [ -v ] [ -p num [ -s num ] ] imagefile path "
+         "[ destination ]\n");
+  printf("Options\n");
+  printf("-p part --- select partition for filesystem (default: none)\n");
+  printf("-s sub --- select subpartition for filesystem (default: none)\n");
+  printf("-h help --- print usage information and exit\n");
+  printf("-v verbose --- increase verbosity level\n");
+  exit(EXIT_FAILURE);
 }
 
 args read_input(int argc, char *argv[]){
   args a;
-  if (argc < 2){
+  if (argc < 3){
     bad_args();
   }
   else{
     a = parse_flags(argc, argv);
     if (a.has_flags == 1){
+      if(optind >= argc - 1){
+        bad_args();
+      }
       a.image = argv[optind++];
       a.filepath = argv[optind++];
       a.dest = (optind >= argc) ? NULL : argv[optind];

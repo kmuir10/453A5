@@ -54,7 +54,6 @@ void getPtable(FILE *img, partent *pt, int ptStart){
 
 void getSublock(FILE *img, sublock *sb, int ptStart){
   int sbLoc = ptStart + SBLOCK_ADDR;
-  printf("sbLoc:%d\n", sbLoc);
   if(fseek(img, sbLoc, SEEK_SET) < 0){
     perror("fseek");
     exit(EXIT_FAILURE);
@@ -79,11 +78,12 @@ loader *prep_ldr(sublock sb, int32_t pt_loc){
   ldr->inodes_loc = pt_loc + (2 + sb.i_blocks + sb.z_blocks) * sb.blocksize;
   ldr->pt_loc = pt_loc;
   ldr->all_loaded = 0;
+  ldr->found = 0;
   
   return ldr;
 }
 
-void load_inode(FILE *img, loader *ldr, int32_t inode_num){
+void load_inode(FILE *img, loader *ldr, uint32_t inode_num){
   int32_t addr = ldr->inodes_loc + (inode_num - 1)  * sizeof(inode);
   if(fseek(img, addr, SEEK_SET) < 0){
     perror("fseek");
@@ -93,10 +93,10 @@ void load_inode(FILE *img, loader *ldr, int32_t inode_num){
     perror("fread");
     exit(EXIT_FAILURE);
   }
+  ldr->current_zone = ldr->all_loaded = ldr->found = 0;
 }
 
 void read_zone(FILE *img, int32_t addr, loader *ldr, void *tgt){
-  printf("loading location %d\n", addr);
   if(fseek(img, addr, SEEK_SET) < 0){
     perror("fseek");
     exit(EXIT_FAILURE);
@@ -136,7 +136,7 @@ void get_next_indirect(loader *ldr, FILE *img){
       }
     }
   }
-  ldr->all_loaded = 0;
+  ldr->all_loaded = 1;
 }
 
 void get_next_zone(loader *ldr, FILE *img){
@@ -145,30 +145,64 @@ void get_next_zone(loader *ldr, FILE *img){
     addr = ldr->pt_loc + ldr->inod->zone[ldr->current_zone] * ldr->z_size;
     read_zone(img, addr, ldr, (void *)ldr->contents);
     ldr->current_zone++;
+    if(ldr->current_zone * ldr->z_size > ldr->inod->size){
+      ldr->all_loaded = 1;
+    }
   }
   else{
     get_next_indirect(ldr, img);
   }
 }
 
-int32_t search_dir(FILE *img, char *tok, loader *ldr){
-  get_next_zone(ldr, img);
+uint32_t search_zone(FILE *img, char *tok, loader *ldr){
+  int i;
   dirent *entries = (dirent *)ldr->contents;
-  printf("%s\n", entries[2].name);
-  printf("File not found\n");
-  exit(EXIT_FAILURE);
+  for(i = 0; i < ldr->z_size / sizeof(dirent); i++){
+    if(strcmp(tok, entries[i].name) == 0){
+      ldr->found = 1;
+      return entries[i].inode;
+    }
+  }
   return 0;
 }
 
+uint32_t dirent_inode_val(FILE *img, loader *ldr, int entry){
+    get_next_zone(ldr, img);
+    dirent *entries = (dirent *)ldr->contents;
+    return entries[entry].inode;
+}
+
+uint32_t search_dir(FILE *img, char *tok, loader *ldr){
+  uint32_t inode_num;
+  ldr->found = 0;
+  if(strcmp(tok, ".") == 0){
+    return dirent_inode_val(img, ldr, 0);
+  }
+  if(strcmp(tok, "..") == 0){
+    return dirent_inode_val(img, ldr, 1);
+  }
+  while(!ldr->all_loaded){
+    get_next_zone(ldr, img);
+    if((inode_num = search_zone(img, tok, ldr))){
+      break;
+    }
+  }
+  if(!ldr->found){
+    printf("File not found\n");
+    exit(EXIT_FAILURE);
+  }
+  return inode_num;
+}
+
 void findFile(FILE *img, char *path, loader *ldr){
-  int32_t inode_num;
+  uint32_t inode_num;
   char *tokenized = safe_malloc(strlen(path));
   strcpy(tokenized, path);
   char *tok = strtok(tokenized, "/");
-  while((tok = strtok(NULL, "/")) != NULL){
+  do{
     inode_num = search_dir(img, tok, ldr);
     load_inode(img, ldr, inode_num);
-  }
+  }while((tok = strtok(NULL, "/")) != NULL);
   free(tokenized);
 }
 
