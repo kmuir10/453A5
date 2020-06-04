@@ -7,18 +7,13 @@
 #include <fcntl.h>
 #include "mintool.h"
 
-
-int32_t swend32(int32_t i){
-  return (((i&0xFF)<<24)|((i&0xFF00)<<8)|
-      ((i&0xFF0000)>>8)|((i&0xFF000000)>>24));
-}
-
-int16_t swend16(int16_t i){
-  return (((i&0xFF)<<8)|((i&0xFF00)>>8));
-}
-
-int32_t zsize(sublock sblk){
-  return sblk.blocksize << sblk.log_zone_size;
+void *safe_malloc(int32_t size){
+  void *res = malloc(size);
+  if(res == NULL){
+    perror("malloc");
+    exit(EXIT_FAILURE);
+  }
+  return res;
 }
 
 /* get partition table from img into pt, which should be a 4 element array of 
@@ -71,72 +66,115 @@ void getSublock(FILE *img, sublock *sb, int ptStart){
   }
 }
 
-void getNextInode(FILE *img, inode *inod, char *nextFile, int32_t ptLoc, int32_t zSize){
-}
-
-loader prep_ldr(sublock sb, int32_t pt_loc){
-  loader ldr;
-  ldr.inod = malloc(sizeof(inode));
-  ldr.current_zone = 0;
-  ldr.z_size = sb.blocksize << sb.log_zone_size;
-  ldr.i1.z_idx = 0;
-  ldr.i1.zones = malloc(ldr.z_size);
-  ldr.i2.z_idx = 0;
-  ldr.i2.zones = malloc(ldr.z_size);
-  ldr.contents = malloc(ldr.z_size);
-  ldr.inodes_loc = pt_loc + (2 + sb.i_blocks + sb.z_blocks) * sb.blocksize;
+loader *prep_ldr(sublock sb, int32_t pt_loc){
+  loader *ldr = safe_malloc(sizeof(loader));
+  ldr->inod = safe_malloc(sizeof(inode));
+  ldr->current_zone = 0;
+  ldr->z_size = sb.blocksize << sb.log_zone_size;
+  ldr->i1.z_idx = 0;
+  ldr->i1.zones = safe_malloc(ldr->z_size);
+  ldr->i2.z_idx = 0;
+  ldr->i2.zones = safe_malloc(ldr->z_size);
+  ldr->contents = safe_malloc(ldr->z_size);
+  ldr->inodes_loc = pt_loc + (2 + sb.i_blocks + sb.z_blocks) * sb.blocksize;
+  ldr->pt_loc = pt_loc;
+  ldr->all_loaded = 0;
   
-  if(!ldr.contents || !ldr.i1.zones || !ldr.i2.zones || !ldr.inod){
-    perror("malloc");
-    exit(EXIT_FAILURE);
-  }
   return ldr;
 }
 
-inode *search_dir(FILE *img, char *tok, loader ldr){
-  return NULL;
-}
-
-void findFile(FILE *img, char *path, loader ldr){
-  char *tokenized = malloc(strlen(path));
-  char *tok;
-  printf("bleh\n");
-  if(!tokenized){
-    perror("malloc");
-    exit(EXIT_FAILURE);
-  }
-  tok = strtok(tokenized, "/");
-  while((tok = strtok(NULL, "/")) != NULL){
-    if(search_dir(img, tok, ldr) == NULL){
-      printf("File not found\n");
-      exit(EXIT_FAILURE);
-    }
-  }
-
-  if(fseek(img, ldr.inodes_loc, SEEK_SET) < 0){
+void load_inode(FILE *img, loader *ldr, int32_t inode_num){
+  int32_t addr = ldr->inodes_loc + (inode_num - 1)  * sizeof(inode);
+  if(fseek(img, addr, SEEK_SET) < 0){
     perror("fseek");
     exit(EXIT_FAILURE);
   }
-
-  if(fread(ldr.inod, sizeof(inode), 1, img) < 1){
+  if(fread(ldr->inod, sizeof(inode), 1, img) < 1){
     perror("fread");
     exit(EXIT_FAILURE);
+  }
+}
+
+void read_zone(FILE *img, int32_t addr, loader *ldr, void *tgt){
+  printf("loading location %d\n", addr);
+  if(fseek(img, addr, SEEK_SET) < 0){
+    perror("fseek");
+    exit(EXIT_FAILURE);
+  }
+  if(fread(tgt, ldr->z_size, 1, img) < 1){
+    perror("fread");
+    exit(EXIT_FAILURE);
+  }
+}
+
+void get_next_indirect(loader *ldr, FILE *img){
+  int addr;
+  while (ldr->current_zone * ldr->z_size < ldr->inod -> size){
+
+    /* Loop through indirect zone contents */
+    while (ldr->i1.z_idx < ldr->z_size / sizeof(int32_t)){
+      ldr->i1.z_idx++;
+      ldr->current_zone++;
+      if (ldr->i1.zones[ldr->i1.z_idx] != 0){
+        addr = ldr->pt_loc + ldr->i1.zones[ldr->i1.z_idx] * ldr->z_size;
+        read_zone(img, addr, ldr, (void *)ldr->contents);
+        return;
+      }
+    }
+
+    /* Loop through double indirect zone contents */
+    while (ldr->i2.z_idx < ldr->z_size / sizeof(int32_t)){
+      ldr->i2.z_idx++;
+      if (ldr->i2.zones[ldr->i2.z_idx] != 0){
+        addr = ldr->pt_loc + ldr->i2.zones[ldr->i2.z_idx] * ldr->z_size;
+        read_zone(img, addr, ldr, (void *)ldr->i1.zones);
+        ldr->i1.z_idx = 0;
+        break;
+      }
+      else{
+        ldr->current_zone += ldr->z_size / sizeof(int32_t);
+      }
+    }
+  }
+  ldr->all_loaded = 0;
+}
+
+void get_next_zone(loader *ldr, FILE *img){
+  int addr;
+  if (ldr->current_zone < DIRECT_ZONES){
+    addr = ldr->pt_loc + ldr->inod->zone[ldr->current_zone] * ldr->z_size;
+    read_zone(img, addr, ldr, (void *)ldr->contents);
+    ldr->current_zone++;
+  }
+  else{
+    get_next_indirect(ldr, img);
+  }
+}
+
+int32_t search_dir(FILE *img, char *tok, loader *ldr){
+  get_next_zone(ldr, img);
+  dirent *entries = (dirent *)ldr->contents;
+  printf("%s\n", entries[2].name);
+  printf("File not found\n");
+  exit(EXIT_FAILURE);
+  return 0;
+}
+
+void findFile(FILE *img, char *path, loader *ldr){
+  int32_t inode_num;
+  char *tokenized = safe_malloc(strlen(path));
+  strcpy(tokenized, path);
+  char *tok = strtok(tokenized, "/");
+  while((tok = strtok(NULL, "/")) != NULL){
+    inode_num = search_dir(img, tok, ldr);
+    load_inode(img, ldr, inode_num);
   }
   free(tokenized);
 }
 
-void findRoot(FILE *img, loader ldr){
-  if(fseek(img, ldr.inodes_loc, SEEK_SET) < 0){
-    perror("fseek");
-    exit(EXIT_FAILURE);
-  }
-
-  if(fread(ldr.inod, sizeof(inode), 1, img) < 1){
-    perror("fread");
-    exit(EXIT_FAILURE);
-  }
-
-  if(!(ldr.inod->mode & DIRECTORY)){
+void findRoot(FILE *img, loader *ldr){
+  load_inode(img, ldr, 1);
+  if(!(ldr->inod->mode & DIRECTORY)){
     printf("Failed to find root directory\n");
     exit(EXIT_FAILURE);
   }
@@ -172,99 +210,40 @@ args parse_flags(int argc, char *argv[]){
   return a;
 }
 
-void read_zone(FILE *img, int32_t addr, loader ldr, void *tgt){
-  if(fseek(img, addr, SEEK_SET) < 0){
-    perror("fseek");
-    exit(EXIT_FAILURE);
-  }
-  if(fread(tgt, ldr.z_size, 1, img) < 1){
-    perror("fread");
-    exit(EXIT_FAILURE);
-  }
-}
-
-void get_next_indirect(loader ldr, FILE *img){
-  int addr;
-  while (ldr.current_zone * ldr.z_size < ldr.inod -> size){
-
-    /* Loop through indirect zone contents */
-    while (ldr.i1.z_idx < ldr.z_size / sizeof(int32_t)){
-      ldr.i1.z_idx++;
-      ldr.current_zone++;
-      if (ldr.i1.zones[ldr.i1.z_idx] != 0){
-        addr = ldr.inodes_loc + (ldr.i1.zones[ldr.i1.z_idx] - 1) 
-              * sizeof(inode);
-        read_zone(img, addr, ldr, (void *)ldr.contents);
-        return;
-      }
-    }
-
-    /* Loop through double indirect zone contents */
-    while (ldr.i2.z_idx < ldr.z_size / sizeof(int32_t)){
-      ldr.i2.z_idx++;
-      if (ldr.i2.zones[ldr.i2.z_idx] != 0){
-        addr = ldr.inodes_loc + (ldr.i2.zones[ldr.i2.z_idx] - 1) 
-              * sizeof(inode);
-        read_zone(img, addr, ldr, (void *)ldr.i1.zones);
-        ldr.i1.z_idx = 0;
-        break;
-      }
-      else{
-        ldr.current_zone += ldr.z_size / sizeof(int32_t);
-      }
-    }
-  }
-  return;
-}
-
-void get_next_zone(loader ldr, FILE *img){
-  if (ldr.current_zone < DIRECT_ZONES){
-    read_zone(img, ldr.inodes_loc, ldr, (void *)ldr.contents);
-    ldr.current_zone++;
-  }
-  else{
-    get_next_indirect(ldr, img);
-  }
-}
-
 void get_permission(inode* i){
 
-  char permissions[10] = "----------";
+  char permissions[11];
+  memset(permissions, '-', 10);
+  permissions[10] = 0;
 
-  if (i -> mode & FILE_TYPE_MASK){
-    permissions[0] = '-';
-  }
-  else if (i -> mode & REGULAR_FILE_MASK){
-    permissions[0] = '-';
-  }
-  else if (i -> mode & DIRECTORY_MASK){
+  if (i -> mode & DIRECTORY_MASK){
     permissions[0] = 'd';
   }
-  else if (i -> mode & OWNER_READ_MASK){
+  if (i -> mode & OWNER_READ_MASK){
     permissions[1] = 'r';
   }
-  else if (i -> mode & OWNER_WRITE_MASK){
+  if (i -> mode & OWNER_WRITE_MASK){
     permissions[2] = 'w';
   }
-  else if (i -> mode & OWNER_EXECUTE_MASK){
+  if (i -> mode & OWNER_EXECUTE_MASK){
     permissions[3] = 'x';
   }
-  else if (i -> mode & GROUP_EXECUTE_MASK){
+  if (i -> mode & GROUP_READ_MASK){
     permissions[4] = 'r';
   }
-  else if (i -> mode & GROUP_EXECUTE_MASK){
+  if (i -> mode & GROUP_WRITE_MASK){
     permissions[5] = 'w';
   }
-  else if (i -> mode & GROUP_EXECUTE_MASK){
+  if (i -> mode & GROUP_EXECUTE_MASK){
     permissions[6] = 'x';
   }
-  else if (i -> mode & OTHER_EXECUTE_MASK){
+  if (i -> mode & OTHER_READ_MASK){
     permissions[7] = 'r';
   }
-  else if (i -> mode & OTHER_EXECUTE_MASK){
+  if (i -> mode & OTHER_WRITE_MASK){
     permissions[8] = 'w';
   }
-  else if (i -> mode & OTHER_EXECUTE_MASK){
+  if (i -> mode & OTHER_EXECUTE_MASK){
     permissions[9] = 'x';
   }
 

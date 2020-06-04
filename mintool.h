@@ -133,20 +133,22 @@ typedef struct loader{
   indir_zone i2;
   int32_t z_size;
   int32_t inodes_loc;
+  int32_t pt_loc;
+  int all_loaded;
 }loader;
 
 /* Get the root inode of a filesystem */
-void findRoot(FILE *img, loader ldr);
+void findRoot(FILE *img, loader *ldr);
 
 /* Get an inode from a filepath and superblock */
-void findFile(FILE *img, char *path, loader ldr);
+void findFile(FILE *img, char *path, loader *ldr);
 
 /* parse v, p, and s options */
 args parse_flags(int argc, char *argv[]);
 
 void load_zone(FILE *img, void *buf, int32_t zSize);
 
-loader prep_ldr(sublock sb, int32_t pt_loc);
+loader *prep_ldr(sublock sb, int32_t pt_loc);
 
 #endif
 
