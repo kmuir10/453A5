@@ -35,13 +35,13 @@ int main(int argc, char *argv[]){
 
   /*Get Partition Table*/
 
-  struct partent *pt = malloc(sizeof(partent));
+  struct partent *pt = safe_malloc(sizeof(partent));
   getPtable(img, pt, a.pt);
 
-  struct sublock *sb = malloc(sizeof(sublock));
+  struct sublock *sb = safe_malloc(sizeof(sublock));
   getSublock(img, sb, a.pt);
 
-  struct loader *ldr = malloc(sizeof(loader));
+  struct loader *ldr = safe_malloc(sizeof(loader));
   uint32_t inode_num = 0;
   load_inode(img, ldr, inode_num);
 
@@ -122,5 +122,4 @@ void bad_args(){
       printf("-v verbose --- increase verbosity level\n");
       exit(EXIT_FAILURE);
 }
-
 

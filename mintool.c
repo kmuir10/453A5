@@ -108,7 +108,6 @@ void load_inode(FILE *img, loader *ldr, uint32_t inode_num){
     perror("fread");
     exit(EXIT_FAILURE);
   }
-  printf("size: %d\n", ldr->z_size);
   read_zone(img, ldr->inod->indirect * ldr->z_size, ldr, ldr->i1.zones);
   read_zone(img, ldr->inod->two_indirect * ldr->z_size, ldr, ldr->i2.zones);
   ldr->current_zone = ldr->all_loaded = ldr->found = 0;
@@ -116,41 +115,33 @@ void load_inode(FILE *img, loader *ldr, uint32_t inode_num){
 
 void get_next_indirect(loader *ldr, FILE *img){
   int addr;
-  printf("start of indirect\n");
   while (ldr->current_zone * ldr->z_size < ldr->inod -> size){
-    printf("start of loop\n");
 
     /* Loop through indirect zone contents */
     while (ldr->i1.z_idx < ldr->z_size / sizeof(int32_t)){
       if (ldr->i1.zones[ldr->i1.z_idx] != 0){
-        printf("non zero direct zone found, loading\n");
         addr = ldr->pt_loc + ldr->i1.zones[ldr->i1.z_idx] * ldr->z_size;
         read_zone(img, addr, ldr, (void *)ldr->contents);
         ldr->i1.z_idx++;
         ldr->current_zone++;
         return;
       }
-      printf("found hole\n");
       ldr->i1.z_idx++;
       ldr->current_zone++;
     }
 
     /* Loop through double indirect zone contents */
     while (ldr->i2.z_idx < ldr->z_size / sizeof(int32_t)){
-      printf("looping through double indirect\n");
       if (ldr->i2.zones[ldr->i2.z_idx] != 0){
-        printf("non zero indirect zone found, loading\n");
         addr = ldr->pt_loc + ldr->i2.zones[ldr->i2.z_idx] * ldr->z_size;
         read_zone(img, addr, ldr, (void *)ldr->i1.zones);
         ldr->i1.z_idx = 0;
         break;
       }
       ldr->i2.z_idx++;
-      printf("big hole found\n");
       ldr->current_zone += ldr->z_size / sizeof(int32_t);
     }
   }
-  printf("end of indirect\n");
   ldr->all_loaded = 1;
 }
 

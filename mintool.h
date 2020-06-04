@@ -7,6 +7,8 @@
 #include <stdint.h>
 #include "debug.h"
 
+void *safe_malloc(int32_t size);
+
 typedef struct args{
   int v_flag;
   int p_flag;

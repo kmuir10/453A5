@@ -30,7 +30,7 @@ int main(int argc, char *argv[]){
     ptLoc = pt_table[a.pt].lFirst * SECTOR_SZ;
   }
 
-  /* sptLoc isn't updated properly yet, fix read_input first to get that from args */
+  /* get the subpartition table if requested and calculate location */
   if(a.s_flag){
     getPtable(img, pt_table, pt_table[a.pt].lFirst);
     ptLoc = pt_table[a.spt].lFirst * SECTOR_SZ;
@@ -43,6 +43,14 @@ int main(int argc, char *argv[]){
   loader *ldr = prep_ldr(sb, ptLoc);
   findRoot(img, ldr);
   findFile(img, a.filepath, ldr);
+  if(ldr->inod->mode & DIRECTORY_MASK){
+    printf("I'm a directory, dummy\n");
+    exit(EXIT_FAILURE);
+  }
+  while(!ldr->all_loaded){
+    get_next_zone(ldr, img);
+    fwrite(ldr->contents, sizeof(char), ldr->z_size, stdout);
+  }
   
   return 0;
 }
