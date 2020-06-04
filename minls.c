@@ -132,6 +132,9 @@ int main(int argc, char *argv[]){
    	for (i = 0; i < DIRECT_ZONES; i++){
    		fprintf(stderr, "zone[%i]: %u\n", i, ldr -> inod -> zone[i]);
    	}
+    fprintf(stderr, "indirect: %u\n", ldr -> inod -> indirect);
+    fprintf(stderr, "two_indirect: %u\n", ldr -> inod -> two_indirect);
+    fprintf(stderr, "unused: %u\n", ldr -> inod -> unused);
   }
   
 
