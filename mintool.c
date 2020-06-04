@@ -42,7 +42,11 @@ void getPtable(FILE *img, partent *pt, int ptStart){
     perror("fread");
     exit(EXIT_FAILURE);
   }
-  printf("signature: %x\n", sig);
+
+  if(sig != PTABLE_SIG){
+    printf("Partition table invalid - signature: %d\n", sig);
+    exit(EXIT_FAILURE);
+  }
 
   /*If not a minix type, stop*/
   if (pt -> type != MINIX_PTYPE){
@@ -83,19 +87,6 @@ loader *prep_ldr(sublock sb, int32_t pt_loc){
   return ldr;
 }
 
-void load_inode(FILE *img, loader *ldr, uint32_t inode_num){
-  int32_t addr = ldr->inodes_loc + (inode_num - 1)  * sizeof(inode);
-  if(fseek(img, addr, SEEK_SET) < 0){
-    perror("fseek");
-    exit(EXIT_FAILURE);
-  }
-  if(fread(ldr->inod, sizeof(inode), 1, img) < 1){
-    perror("fread");
-    exit(EXIT_FAILURE);
-  }
-  ldr->current_zone = ldr->all_loaded = ldr->found = 0;
-}
-
 void read_zone(FILE *img, int32_t addr, loader *ldr, void *tgt){
   if(fseek(img, addr, SEEK_SET) < 0){
     perror("fseek");
@@ -107,35 +98,59 @@ void read_zone(FILE *img, int32_t addr, loader *ldr, void *tgt){
   }
 }
 
+void load_inode(FILE *img, loader *ldr, uint32_t inode_num){
+  int32_t addr = ldr->inodes_loc + (inode_num - 1)  * sizeof(inode);
+  if(fseek(img, addr, SEEK_SET) < 0){
+    perror("fseek");
+    exit(EXIT_FAILURE);
+  }
+  if(fread(ldr->inod, sizeof(inode), 1, img) < 1){
+    perror("fread");
+    exit(EXIT_FAILURE);
+  }
+  printf("size: %d\n", ldr->z_size);
+  read_zone(img, ldr->inod->indirect * ldr->z_size, ldr, ldr->i1.zones);
+  read_zone(img, ldr->inod->two_indirect * ldr->z_size, ldr, ldr->i2.zones);
+  ldr->current_zone = ldr->all_loaded = ldr->found = 0;
+}
+
 void get_next_indirect(loader *ldr, FILE *img){
   int addr;
+  printf("start of indirect\n");
   while (ldr->current_zone * ldr->z_size < ldr->inod -> size){
+    printf("start of loop\n");
 
     /* Loop through indirect zone contents */
     while (ldr->i1.z_idx < ldr->z_size / sizeof(int32_t)){
-      ldr->i1.z_idx++;
-      ldr->current_zone++;
       if (ldr->i1.zones[ldr->i1.z_idx] != 0){
+        printf("non zero direct zone found, loading\n");
         addr = ldr->pt_loc + ldr->i1.zones[ldr->i1.z_idx] * ldr->z_size;
         read_zone(img, addr, ldr, (void *)ldr->contents);
+        ldr->i1.z_idx++;
+        ldr->current_zone++;
         return;
       }
+      printf("found hole\n");
+      ldr->i1.z_idx++;
+      ldr->current_zone++;
     }
 
     /* Loop through double indirect zone contents */
     while (ldr->i2.z_idx < ldr->z_size / sizeof(int32_t)){
-      ldr->i2.z_idx++;
+      printf("looping through double indirect\n");
       if (ldr->i2.zones[ldr->i2.z_idx] != 0){
+        printf("non zero indirect zone found, loading\n");
         addr = ldr->pt_loc + ldr->i2.zones[ldr->i2.z_idx] * ldr->z_size;
         read_zone(img, addr, ldr, (void *)ldr->i1.zones);
         ldr->i1.z_idx = 0;
         break;
       }
-      else{
-        ldr->current_zone += ldr->z_size / sizeof(int32_t);
-      }
+      ldr->i2.z_idx++;
+      printf("big hole found\n");
+      ldr->current_zone += ldr->z_size / sizeof(int32_t);
     }
   }
+  printf("end of indirect\n");
   ldr->all_loaded = 1;
 }
 
@@ -144,6 +159,7 @@ void get_next_zone(loader *ldr, FILE *img){
   if (ldr->current_zone < DIRECT_ZONES){
     addr = ldr->pt_loc + ldr->inod->zone[ldr->current_zone] * ldr->z_size;
     read_zone(img, addr, ldr, (void *)ldr->contents);
+    printf("current zone: %d\n", ldr->current_zone);
     ldr->current_zone++;
     if(ldr->current_zone * ldr->z_size > ldr->inod->size){
       ldr->all_loaded = 1;

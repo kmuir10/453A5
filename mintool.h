@@ -36,8 +36,7 @@ typedef struct args{
 #define PTABLE_ADDR 0x1BE
 #define SBLOCK_ADDR 1024
 #define MINIX_PTYPE 0x81
-#define SIG_510     0x55
-#define SIG_511     0xAA
+#define PTABLE_SIG  0xAA55
 #define MAGIC       0x4D5A
 #define MAGIC_R     0x5A4D
 #define SECTOR_SZ   512
@@ -150,6 +149,8 @@ args parse_flags(int argc, char *argv[]);
 void load_zone(FILE *img, void *buf, int32_t zSize);
 
 loader *prep_ldr(sublock sb, int32_t pt_loc);
+
+void get_next_zone(loader *ldr, FILE *img);
 
 #endif
 
