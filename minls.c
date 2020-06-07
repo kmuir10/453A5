@@ -183,7 +183,7 @@ int main(int argc, char *argv[]){
     fprintf(stderr, "\n/:\n");
     for(i = 0; i < ldr->z_size / sizeof(dirent); i++){
       if(entries[i].inode != 0){
-         load_inode(img, ldr, entries[i].inode);
+        load_inode(img, ldr, entries[i].inode);
         get_permission(ldr -> inod, perm);
         fprintf(stderr, "%s %d %s\n", perm, 
           ldr -> inod -> size, entries[i].name);
