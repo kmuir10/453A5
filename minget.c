@@ -65,20 +65,28 @@ int main(int argc, char *argv[]){
   findFile(img, a.filepath, ldr);
   int left_to_print = ldr->inod->size, to_print_now;
   if(ldr->inod->mode & DIRECTORY_MASK){
-    printf("I'm a directory, dummy\n");
+    fprintf(stderr, "%s is a directory\n", a.filepath);
+    exit(EXIT_FAILURE);
+  }
+  if(!(ldr->inod->mode & REGULAR_FILE_MASK)){
+    fprintf(stderr, "%s is not a regular file\n", a.filepath);
     exit(EXIT_FAILURE);
   }
   while(!ldr->all_loaded){
     get_next_zone(ldr, img);
     int i;
-    for(i = 0; i < ldr->empty_count; i++){
-      printf("writing empty\n");
-      fwrite(empty, sizeof(char), ldr->z_size, dest);
-      left_to_print -= ldr->z_size;
+    if(ldr->empty_count > 0){
+      for(i = 0; i < ldr->empty_count; i++){
+        fwrite(empty, sizeof(char), ldr->z_size, dest);
+        left_to_print -= ldr->z_size;
+      }
+      ldr->empty_count = 0;
     }
-    to_print_now = min(left_to_print, ldr->z_size);
-    fwrite(ldr->contents, sizeof(char), to_print_now, dest);
-    left_to_print -= to_print_now;
+    else{
+      to_print_now = min(left_to_print, ldr->z_size);
+      fwrite(ldr->contents, sizeof(char), to_print_now, dest);
+      left_to_print -= to_print_now;
+    }
   }
   
   return 0;

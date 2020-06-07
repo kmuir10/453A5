@@ -152,8 +152,13 @@ void get_next_indirect(loader *ldr, FILE *img){
 void get_next_zone(loader *ldr, FILE *img){
   int addr;
   if (ldr->current_zone < DIRECT_ZONES){
-    addr = ldr->pt_loc + ldr->inod->zone[ldr->current_zone] * ldr->z_size;
-    read_zone(img, addr, ldr, (void *)ldr->contents);
+    if(ldr->inod->zone[ldr->current_zone] != 0){
+      addr = ldr->pt_loc + ldr->inod->zone[ldr->current_zone] * ldr->z_size;
+      read_zone(img, addr, ldr, (void *)ldr->contents);
+    }
+    else if(ldr->current_zone * ldr->z_size < ldr->inod->size){
+      ldr->empty_count++;
+    }
     ldr->current_zone++;
     if(ldr->current_zone * ldr->z_size > ldr->inod->size){
       ldr->all_loaded = 1;
