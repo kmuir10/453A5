@@ -101,14 +101,18 @@ void read_zone(FILE *img, int32_t addr, loader *ldr, void *tgt){
 
 void load_inode(FILE *img, loader *ldr, uint32_t inode_num){
   int32_t addr = ldr->inodes_loc + (inode_num - 1)  * sizeof(inode);
+  printf("C3\n");
   if(fseek(img, addr, SEEK_SET) < 0){
     perror("fseek");
     exit(EXIT_FAILURE);
   }
+  printf("C4\n");
+  printf("ldr->inod: %p\n", ldr->inod);
   if(fread(ldr->inod, sizeof(inode), 1, img) < 1){
     perror("fread");
     exit(EXIT_FAILURE);
   }
+  printf("C5\n");
   read_zone(img, ldr->inod->indirect * ldr->z_size, ldr, ldr->i1.zones);
   read_zone(img, ldr->inod->two_indirect * ldr->z_size, ldr, ldr->i2.zones);
   ldr->current_zone = ldr->all_loaded = ldr->found = 0;
