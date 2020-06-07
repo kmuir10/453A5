@@ -63,7 +63,7 @@ void get_time(uint32_t ti){
  	time_t t = rawtime;
  	timeinfo = localtime(&t);
  	asctime(timeinfo);
- 	fprintf(stderr, "%s\n", asctime(timeinfo));
+ 	fprintf(stderr, "%s", asctime(timeinfo));
 }
 
 int main(int argc, char *argv[]){  
@@ -74,6 +74,7 @@ int main(int argc, char *argv[]){
   /* open the image */
   FILE *img = fopen(a.image, "r");
 
+  /*
   if (img == NULL){
     perror("No such file\n");
     exit(EXIT_FAILURE);
@@ -86,6 +87,7 @@ int main(int argc, char *argv[]){
     printf("num_of_partitions: %i\n", a.pt);
     printf("num_of_sub_partitions: %i\n", a.spt);
   }
+  */
 
   /*Get Partition Table*/
 
@@ -120,20 +122,20 @@ int main(int argc, char *argv[]){
   	/*Print the partition, superblock, and inode to stderr*/
 
   	if (a.p_flag == 1){
-  		fprintf(stderr, "Partition:\n");
-	  	fprintf(stderr, "\tbootind: %u\n", pt_table -> bootind);
-	  	fprintf(stderr, "\tstart_head: %u\n", pt_table -> start_head);
-	   	fprintf(stderr, "\tstart_sec: %u\n", pt_table -> start_sec);
-	   	fprintf(stderr, "\tstart_cyl: %u\n", pt_table -> start_cyl);
-	   	fprintf(stderr, "\ttype: %u\n", pt_table -> type);
-	   	fprintf(stderr, "\tend_head: %u\n", pt_table -> end_head);
-	   	fprintf(stderr, "\tend_sec: %u\n", pt_table -> end_sec);
-	   	fprintf(stderr, "\tend_cyl: %u\n", pt_table -> end_cyl);
-	   	fprintf(stderr, "\tlFirst: %u\n", pt_table -> lFirst);
-	   	fprintf(stderr, "\tsize: %u\n", pt_table -> size);
+  		fprintf(stderr, "\nPartition:\n");
+	  	fprintf(stderr, "\tbootind %u\n", pt_table -> bootind);
+	  	fprintf(stderr, "\tstart_head %u\n", pt_table -> start_head);
+	   	fprintf(stderr, "\tstart_sec %u\n", pt_table -> start_sec);
+	   	fprintf(stderr, "\tstart_cyl %u\n", pt_table -> start_cyl);
+	   	fprintf(stderr, "\ttype %u\n", pt_table -> type);
+	   	fprintf(stderr, "\tend_head %u\n", pt_table -> end_head);
+	   	fprintf(stderr, "\tend_sec %u\n", pt_table -> end_sec);
+	   	fprintf(stderr, "\tend_cyl %u\n", pt_table -> end_cyl);
+	   	fprintf(stderr, "\tlFirst %u\n", pt_table -> lFirst);
+	   	fprintf(stderr, "\tsize %u\n", pt_table -> size);
   	}
 
-   	fprintf(stderr, "Superblock:\n");
+   	fprintf(stderr, "\nSuperblock:\n");
    	fprintf(stderr, "Stored Fields:\n");
    	fprintf(stderr, "\tninodes: %u\n", sb.ninodes);
    	fprintf(stderr, "\ti_blocks %u\n", sb.i_blocks);
@@ -141,32 +143,34 @@ int main(int argc, char *argv[]){
    	fprintf(stderr, "\tfirstdata %u\n", sb.firstdata);
    	fprintf(stderr, "\tlog_zone_size %u\n", sb.log_zone_size);
    	fprintf(stderr, "\tmax_file %u\n", sb.max_file);
-   	fprintf(stderr, "\tmagic %u\n", sb.magic);
+   	fprintf(stderr, "\tmagic 0x%x\n", sb.magic);
    	fprintf(stderr, "\tzones %u\n", sb.zones);
    	fprintf(stderr, "\tblocksize %u\n", sb.blocksize);
    	fprintf(stderr, "\tsubversion %u\n", sb.subversion);
 
-   	fprintf(stderr, "File inode:\n");
-   	fprintf(stderr, "\tuint16_t mode: %s\n", perm);
-   	fprintf(stderr, "\tuint16_t links: %u\n", ldr -> inod -> links);
-   	fprintf(stderr, "\tuint16_t uid: %u\n", ldr -> inod -> uid);
-   	fprintf(stderr, "\tuint16_t gid: %u\n", ldr -> inod -> gid);
-   	fprintf(stderr, "\tuint32_t size: %u\n", ldr -> inod -> size);
-   	fprintf(stderr, "\tuint32_t atime: %u --- ", ldr -> inod -> atime);
+   	fprintf(stderr, "\nFile inode:\n");
+   	fprintf(stderr, "\tuint16_t mode 0x%x (%s)\n", 
+      ldr -> inod -> mode, perm);
+   	fprintf(stderr, "\tuint16_t links %u\n", ldr -> inod -> links);
+   	fprintf(stderr, "\tuint16_t uid %u\n", ldr -> inod -> uid);
+   	fprintf(stderr, "\tuint16_t gid %u\n", ldr -> inod -> gid);
+   	fprintf(stderr, "\tuint32_t size %u\n", ldr -> inod -> size);
+   	fprintf(stderr, "\tuint32_t atime %u --- ", ldr -> inod -> atime);
    	get_time(ldr -> inod -> atime);
-   	fprintf(stderr, "\tuint32_t mtime: %u --- ", ldr -> inod -> mtime);
+   	fprintf(stderr, "\tuint32_t mtime %u --- ", ldr -> inod -> mtime);
    	get_time(ldr -> inod -> mtime);
-   	fprintf(stderr, "\tuint32_t ctime: %u --- ", ldr -> inod -> ctime);
+   	fprintf(stderr, "\tuint32_t ctime %u --- ", ldr -> inod -> ctime);
    	get_time(ldr -> inod -> ctime);
-   	fprintf(stderr, "\tDIRECT_ZONES: %u\n", DIRECT_ZONES);
+   	fprintf(stderr, "\n\tDIRECT_ZONES\n");
    	for (i = 0; i < DIRECT_ZONES; i++){
-   		fprintf(stderr, "\t\tzone[%i]: %u\n", i, ldr -> inod -> zone[i]);
+   		fprintf(stderr, "\t\tzone[%i] = %u\n", i, ldr -> inod -> zone[i]);
    	}
-    fprintf(stderr, "\tuint32_t indirect: %u\n", ldr -> inod -> indirect);
-    fprintf(stderr, "\tuint32_t double: %u\n", ldr -> inod -> two_indirect);
+    fprintf(stderr, "\tuint32_t indirect %u\n", ldr -> inod -> indirect);
+    fprintf(stderr, "\tuint32_t double %u\n", ldr -> inod -> two_indirect);
   }
   
-  //printf("filepath: %s\n", a.filepath);
+  /*Print contents of current filepath*/
+
   findFile(img, a.filepath, ldr);
 
   if (ldr -> inod -> mode & DIRECTORY_MASK){
@@ -176,28 +180,21 @@ int main(int argc, char *argv[]){
     //search_dir and search zone (refactor both of them)
     dirent *entries = (dirent *)ldr->contents;
 
+    fprintf(stderr, "\n/:\n");
     for(i = 0; i < ldr->z_size / sizeof(dirent); i++){
       if(entries[i].inode != 0){
-        //printf("Entry: %s\n", entries[i].name);
+        load_inode(img, ldr, entries[i].inode);
+        get_permission(ldr -> inod, perm);
+        fprintf(stderr, "%s %d %s\n", perm, 
+          ldr -> inod -> size, entries[i].name);
       }
-    }
-
-    int idx = 0;
-    while(!ldr->all_loaded){
-      get_next_zone(ldr, img);
-      get_permission(ldr -> inod, perm);
-      printf("%s %d %s\n", perm, ldr -> inod -> size,
-        entries[idx].name); 
-      idx++;
     }
   }
   else{
     /*Is a file*/
     /*Print mode, size, and filename*/
-    printf("F\n");
     get_permission(ldr -> inod, perm);
     printf("%s %d %s\n", perm, ldr -> inod -> size, a.filepath);
-  	printf("G\n");
   }
 
   return 0;
