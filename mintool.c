@@ -93,9 +93,9 @@ void read_zone(FILE *img, int32_t addr, loader *ldr, void *tgt){
     perror("fseek");
     exit(EXIT_FAILURE);
   }
-  int res;
-  if((res = fread(tgt, ldr->z_size, 1, img)) < 1){
-    perror("fread b");
+  if(fread(tgt, ldr->z_size, 1, img) < 1){
+    fprintf(stderr, "Bad magic number. (0x%x)\n", addr);
+    fprintf(stderr, "This doesn’t look like a MINIX filesystem.\n");
     exit(EXIT_FAILURE);
   }
 }
