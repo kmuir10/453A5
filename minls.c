@@ -160,10 +160,10 @@ int main(int argc, char *argv[]){
    	get_time(ldr -> inod -> ctime);
    	fprintf(stderr, "\tDIRECT_ZONES: %u\n", DIRECT_ZONES);
    	for (i = 0; i < DIRECT_ZONES; i++){
-   		fprintf(stderr, "\t\tzone[%i]: %u\n", i, ldr -> inod -> zone[i]);
+   		fprintf(stderr, "\t\tzone[%i]: %u\n", i, ldr->inod->zone[i]);
    	}
     fprintf(stderr, "\tuint32_t indirect: %u\n", ldr -> inod -> indirect);
-    fprintf(stderr, "\tuint32_t double: %u\n", ldr -> inod -> two_indirect);
+    fprintf(stderr, "\tuint32_t double: %u\n", ldr->inod->two_indirect);
   }
   
   //printf("filepath: %s\n", a.filepath);
