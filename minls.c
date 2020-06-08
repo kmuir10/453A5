@@ -181,7 +181,15 @@ int main(int argc, char *argv[]){
     get_next_zone(ldr, img);
     dirent *entries = (dirent *)ldr->contents;
 
-    fprintf(stderr, "%s:\n", a.filepath);
+    if (strcmp(a.filepath, ".") != 0){
+      fprintf(stderr, "%s:\n", a.filepath);
+    }
+    else{
+      fprintf(stderr, "/:\n");
+    }
+
+    //First zone only
+
     for(i = 0; i < ldr->z_size / sizeof(dirent); i++){
       if(entries[i].inode != 0){
         load_inode(img, ldr, entries[i].inode);
