@@ -66,6 +66,18 @@ void get_time(uint32_t ti){
  	fprintf(stderr, "%s", asctime(timeinfo));
 }
 
+void load_dirent_inode(FILE *img, loader *ldr, inode *inod, uint32_t i_num){
+  int32_t addr = ldr->inodes_loc + (i_num - 1)  * sizeof(inode);
+  if(fseek(img, addr, SEEK_SET) < 0){
+    perror("fseek");
+    exit(EXIT_FAILURE);
+  }
+  if(fread(inod, sizeof(inode), 1, img) < 1){
+    perror("fread a");
+    exit(EXIT_FAILURE);
+  }
+}
+
 int main(int argc, char *argv[]){  
   
   args a = read_input(argc, argv);
@@ -114,7 +126,7 @@ int main(int argc, char *argv[]){
 
   uint32_t inode_num = 1;
   loader *ldr = prep_ldr(sb, pt_loc);
-  load_inode(img, ldr, inode_num);
+  load_ldr_inode(img, ldr, inode_num);
   char perm[PERMISSION_SIZE + 1];
   get_permission(ldr -> inod, perm);
 
@@ -178,7 +190,6 @@ int main(int argc, char *argv[]){
     /*print all files info*/
 
     //search_dir and search zone (refactor both of them)
-    get_next_zone(ldr, img);
     dirent *entries = (dirent *)ldr->contents;
 
     if (strcmp(a.filepath, ".") != 0){
@@ -189,13 +200,17 @@ int main(int argc, char *argv[]){
     }
 
     //First zone only
+    inode dir_inode;
 
-    for(i = 0; i < ldr->z_size / sizeof(dirent); i++){
-      if(entries[i].inode != 0){
-        load_inode(img, ldr, entries[i].inode);
-        get_permission(ldr -> inod, perm);
-        fprintf(stderr, "%s %9d %s\n", perm, 
-          ldr -> inod -> size, entries[i].name);
+    while(!ldr->all_loaded){
+      get_next_zone(ldr, img);
+      for(i = 0; i < ldr->z_size / sizeof(dirent); i++){
+        if(entries[i].inode != 0){
+          load_dirent_inode(img, ldr, &dir_inode, entries[i].inode);
+          get_permission(&dir_inode, perm);
+          fprintf(stderr, "%s %9d %s\n", perm, 
+            dir_inode.size, entries[i].name);
+        }
       }
     }
   }

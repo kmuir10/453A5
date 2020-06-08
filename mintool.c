@@ -100,7 +100,7 @@ void read_zone(FILE *img, int32_t addr, loader *ldr, void *tgt){
   }
 }
 
-void load_inode(FILE *img, loader *ldr, uint32_t inode_num){
+void load_ldr_inode(FILE *img, loader *ldr, uint32_t inode_num){
   int32_t addr = ldr->inodes_loc + (inode_num - 1)  * sizeof(inode);
   if(fseek(img, addr, SEEK_SET) < 0){
     perror("fseek");
@@ -161,12 +161,12 @@ void get_next_zone(loader *ldr, FILE *img){
       ldr->empty_count++;
     }
     ldr->current_zone++;
-    if(ldr->current_zone * ldr->z_size > ldr->inod->size){
-      ldr->all_loaded = 1;
-    }
   }
   else{
     get_next_indirect(ldr, img);
+  }
+  if(ldr->current_zone * ldr->z_size > ldr->inod->size){
+    ldr->all_loaded = 1;
   }
 }
 
@@ -224,13 +224,13 @@ void findFile(FILE *img, char *path, loader *ldr){
   char *tok = strtok(tokenized, "/");
   do{
     inode_num = search_dir(img, tok, ldr);
-    load_inode(img, ldr, inode_num);
+    load_ldr_inode(img, ldr, inode_num);
   }while((tok = strtok(NULL, "/")) != NULL);
   free(tokenized);
 }
 
 void findRoot(FILE *img, loader *ldr){
-  load_inode(img, ldr, 1);
+  load_ldr_inode(img, ldr, 1);
   if(!(ldr->inod->mode & DIRECTORY)){
     printf("Failed to find root directory\n");
     exit(EXIT_FAILURE);

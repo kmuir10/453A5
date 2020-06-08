@@ -156,7 +156,7 @@ typedef struct loader{
 /* Get the root inode of a filesystem */
 void findRoot(FILE *img, loader *ldr);
 
-void load_inode(FILE *img, loader *ldr, uint32_t inode_num);
+void load_ldr_inode(FILE *img, loader *ldr, uint32_t inode_num);
 
 /* Get an inode from a filepath and superblock */
 void findFile(FILE *img, char *path, loader *ldr);
