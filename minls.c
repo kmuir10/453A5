@@ -18,7 +18,6 @@ args read_input(int argc, char *argv[]);
 int i = 0;
 
 void get_permission(inode* i, char* perm){
-
   char permissions[PERMISSION_SIZE + 1];
   memset(permissions, '-', PERMISSION_SIZE);
   permissions[PERMISSION_SIZE] = 0;
@@ -78,152 +77,6 @@ void load_dirent_inode(FILE *img, loader *ldr, inode *inod, uint32_t i_num){
   }
 }
 
-int main(int argc, char *argv[]){  
-  
-  args a = read_input(argc, argv);
-  int pt_loc = 0;
-
-  /* open the image */
-  FILE *img = fopen(a.image, "r");
-
-  /*
-  if (img == NULL){
-    perror("No such file\n");
-    exit(EXIT_FAILURE);
-  }
-  else{
-    printf("Such file\n");
-    printf("v_flag: %d\n", a.v_flag);
-    printf("p_flag: %i\n", a.p_flag);
-    printf("s_flag: %i\n", a.s_flag);
-    printf("num_of_partitions: %i\n", a.pt);
-    printf("num_of_sub_partitions: %i\n", a.spt);
-  }
-  */
-
-  /*Get Partition Table*/
-
-  /* get the first partition table if requested
-   * and calculate location of requested partition */
-  partent pt_table[4];
-  if(a.p_flag){
-    getPtable(img, pt_table, 0);
-    pt_loc = pt_table[a.pt].lFirst * SECTOR_SZ;
-  }
-
-  /* get the subpartition table if requested and calculate location */
-  if(a.s_flag){
-    getPtable(img, pt_table, pt_table[a.pt].lFirst);
-    pt_loc = pt_table[a.spt].lFirst * SECTOR_SZ;
-  }
-
-  /*Get Superblock*/
-
-  sublock sb;
-  getSublock(img, &sb, pt_loc);
-
-  /*Get Loader*/
-
-  uint32_t inode_num = 1;
-  loader *ldr = prep_ldr(sb, pt_loc);
-  load_ldr_inode(img, ldr, inode_num);
-  char perm[PERMISSION_SIZE + 1];
-  get_permission(ldr -> inod, perm);
-
-  if (a.v_flag == 1){
-  	/*Print the partition, superblock, and inode to stderr*/
-
-  	if (a.p_flag == 1){
-  		fprintf(stderr, "\nPartition:\n");
-	  	fprintf(stderr, "\tbootind %9u\n", pt_table -> bootind);
-	  	fprintf(stderr, "\tstart_head %9u\n", pt_table -> start_head);
-	   	fprintf(stderr, "\tstart_sec %9u\n", pt_table -> start_sec);
-	   	fprintf(stderr, "\tstart_cyl %9u\n", pt_table -> start_cyl);
-	   	fprintf(stderr, "\ttype %9u\n", pt_table -> type);
-	   	fprintf(stderr, "\tend_head %9u\n", pt_table -> end_head);
-	   	fprintf(stderr, "\tend_sec %9u\n", pt_table -> end_sec);
-	   	fprintf(stderr, "\tend_cyl %9u\n", pt_table -> end_cyl);
-	   	fprintf(stderr, "\tlFirst %9u\n", pt_table -> lFirst);
-	   	fprintf(stderr, "\tsize %9u\n", pt_table -> size);
-  	}
-
-   	fprintf(stderr, "\nSuperblock:\n");
-   	fprintf(stderr, "Stored Fields:\n");
-   	fprintf(stderr, "\tninodes: %9u\n", sb.ninodes);
-   	fprintf(stderr, "\ti_blocks %9u\n", sb.i_blocks);
-   	fprintf(stderr, "\tz_blocks %9u\n", sb.z_blocks);
-   	fprintf(stderr, "\tfirstdata %9u\n", sb.firstdata);
-   	fprintf(stderr, "\tlog_zone_size %9u\n", sb.log_zone_size);
-   	fprintf(stderr, "\tmax_file %9u\n", sb.max_file);
-   	fprintf(stderr, "\tmagic 0x%9x\n", sb.magic);
-   	fprintf(stderr, "\tzones %9u\n", sb.zones);
-   	fprintf(stderr, "\tblocksize %9u\n", sb.blocksize);
-   	fprintf(stderr, "\tsubversion %9u\n", sb.subversion);
-
-   	fprintf(stderr, "\nFile inode:\n");
-   	fprintf(stderr, "\tuint16_t mode 0x%9x (%9s)\n", 
-      ldr -> inod -> mode, perm);
-   	fprintf(stderr, "\tuint16_t links %9u\n", ldr -> inod -> links);
-   	fprintf(stderr, "\tuint16_t uid %9u\n", ldr -> inod -> uid);
-   	fprintf(stderr, "\tuint16_t gid %9u\n", ldr -> inod -> gid);
-   	fprintf(stderr, "\tuint32_t size %9u\n", ldr -> inod -> size);
-   	fprintf(stderr, "\tuint32_t atime %9u --- ", ldr -> inod -> atime);
-   	get_time(ldr -> inod -> atime);
-   	fprintf(stderr, "\tuint32_t mtime %9u --- ", ldr -> inod -> mtime);
-   	get_time(ldr -> inod -> mtime);
-   	fprintf(stderr, "\tuint32_t ctime %9u --- ", ldr -> inod -> ctime);
-   	get_time(ldr -> inod -> ctime);
-   	fprintf(stderr, "\n\tDIRECT_ZONES\n");
-   	for (i = 0; i < DIRECT_ZONES; i++){
-   	  fprintf(stderr, "\t\tzone[%i] = %9u\n", i, ldr -> inod -> zone[i]);
-   	}
-    fprintf(stderr, "\tuint32_t indirect %9u\n", ldr -> inod -> indirect);
-    fprintf(stderr, "\tuint32_t double %9u\n", ldr -> inod -> two_indirect);
-  }
-  
-  /*Print contents of current filepath*/
-
-  findFile(img, a.filepath, ldr);
-
-  if (ldr -> inod -> mode & DIRECTORY_MASK){
-    /*Is a directory*/
-    /*print all files info*/
-
-    //search_dir and search zone (refactor both of them)
-    dirent *entries = (dirent *)ldr->contents;
-
-    if (strcmp(a.filepath, ".") != 0){
-      fprintf(stderr, "%s:\n", a.filepath);
-    }
-    else{
-      fprintf(stderr, "/:\n");
-    }
-
-    //First zone only
-    inode dir_inode;
-
-    while(!ldr->all_loaded){
-      get_next_zone(ldr, img);
-      for(i = 0; i < ldr->z_size / sizeof(dirent); i++){
-        if(entries[i].inode != 0){
-          load_dirent_inode(img, ldr, &dir_inode, entries[i].inode);
-          get_permission(&dir_inode, perm);
-          fprintf(stderr, "%s %9d %s\n", perm, 
-            dir_inode.size, entries[i].name);
-        }
-      }
-    }
-  }
-  else{
-    /*Is a file*/
-    /*Print mode, size, and filename*/
-    get_permission(ldr -> inod, perm);
-    printf("%s %9d %9s\n", perm, ldr -> inod -> size, a.filepath);
-  }
-
-  return 0;
-}
-
 args read_input(int argc, char *argv[]){
   args a;
   if (argc == 1){
@@ -250,5 +103,142 @@ void bad_args(){
   printf("-h help --- print usage information and exit\n");
   printf("-v verbose --- increase verbosity level\n");
   exit(EXIT_FAILURE);
+}
+
+void print_pt(partent pt_table[4]){
+	fprintf(stderr, "\nPartition:\n");
+	fprintf(stderr, "\tbootind %9u\n", pt_table -> bootind);
+	fprintf(stderr, "\tstart_head %9u\n", pt_table -> start_head);
+ 	fprintf(stderr, "\tstart_sec %9u\n", pt_table -> start_sec);
+ 	fprintf(stderr, "\tstart_cyl %9u\n", pt_table -> start_cyl);
+ 	fprintf(stderr, "\ttype %9u\n", pt_table -> type);
+ 	fprintf(stderr, "\tend_head %9u\n", pt_table -> end_head);
+ 	fprintf(stderr, "\tend_sec %9u\n", pt_table -> end_sec);
+ 	fprintf(stderr, "\tend_cyl %9u\n", pt_table -> end_cyl);
+ 	fprintf(stderr, "\tlFirst %9u\n", pt_table -> lFirst);
+ 	fprintf(stderr, "\tsize %9u\n", pt_table -> size);
+}
+
+void print_sb(sublock sb){
+	fprintf(stderr, "\nSuperblock:\n");
+ 	fprintf(stderr, "Stored Fields:\n");
+ 	fprintf(stderr, "\tninodes: %9u\n", sb.ninodes);
+ 	fprintf(stderr, "\ti_blocks %9u\n", sb.i_blocks);
+ 	fprintf(stderr, "\tz_blocks %9u\n", sb.z_blocks);
+ 	fprintf(stderr, "\tfirstdata %9u\n", sb.firstdata);
+ 	fprintf(stderr, "\tlog_zone_size %9u\n", sb.log_zone_size);
+ 	fprintf(stderr, "\tmax_file %9u\n", sb.max_file);
+ 	fprintf(stderr, "\tmagic 0x%9x\n", sb.magic);
+ 	fprintf(stderr, "\tzones %9u\n", sb.zones);
+ 	fprintf(stderr, "\tblocksize %9u\n", sb.blocksize);
+ 	fprintf(stderr, "\tsubversion %9u\n", sb.subversion);
+}
+
+void print_inode(loader *ldr, char perm[PERMISSION_SIZE + 1]){
+	fprintf(stderr, "\nFile inode:\n");
+ 	fprintf(stderr, "\tuint16_t mode 0x%9x (%9s)\n", 
+    ldr -> inod -> mode, perm);
+ 	fprintf(stderr, "\tuint16_t links %9u\n", ldr -> inod -> links);
+ 	fprintf(stderr, "\tuint16_t uid %9u\n", ldr -> inod -> uid);
+ 	fprintf(stderr, "\tuint16_t gid %9u\n", ldr -> inod -> gid);
+ 	fprintf(stderr, "\tuint32_t size %9u\n", ldr -> inod -> size);
+ 	fprintf(stderr, "\tuint32_t atime %9u --- ", ldr -> inod -> atime);
+ 	get_time(ldr -> inod -> atime);
+ 	fprintf(stderr, "\tuint32_t mtime %9u --- ", ldr -> inod -> mtime);
+ 	get_time(ldr -> inod -> mtime);
+ 	fprintf(stderr, "\tuint32_t ctime %9u --- ", ldr -> inod -> ctime);
+ 	get_time(ldr -> inod -> ctime);
+ 	fprintf(stderr, "\n\tDIRECT_ZONES\n");
+ 	for (i = 0; i < DIRECT_ZONES; i++){
+ 	  fprintf(stderr, "\t\tzone[%i] = %9u\n", i, ldr -> inod -> zone[i]);
+ 	}
+  fprintf(stderr, "\tuint32_t indirect %9u\n", ldr -> inod -> indirect);
+  fprintf(stderr, "\tuint32_t double %9u\n", ldr -> inod -> two_indirect);
+}
+
+int main(int argc, char *argv[]){  
+  
+  args a = read_input(argc, argv);
+  int pt_loc = 0;
+
+  /* open the image */
+  FILE *img = fopen(a.image, "r");
+
+  /*Get Partition Table*/
+
+  /* get the first partition table if requested
+   * and calculate location of requested partition */
+  partent pt_table[4];
+  if(a.p_flag){
+    getPtable(img, pt_table, 0);
+    pt_loc = pt_table[a.pt].lFirst * SECTOR_SZ;
+  }
+
+  /* get the subpartition table if requested and calculate location */
+  if(a.s_flag){
+    getPtable(img, pt_table, pt_table[a.pt].lFirst);
+    pt_loc = pt_table[a.spt].lFirst * SECTOR_SZ;
+  }
+
+  /*Get Superblock*/
+  sublock sb;
+  getSublock(img, &sb, pt_loc);
+
+  /*Get Loader*/
+  uint32_t inode_num = 1;
+  loader *ldr = prep_ldr(sb, pt_loc);
+  load_ldr_inode(img, ldr, inode_num);
+  char perm[PERMISSION_SIZE + 1];
+  get_permission(ldr -> inod, perm);
+
+  if (a.v_flag == 1){
+  	/*Print the partition, superblock, and inode to stderr*/
+
+  	if (a.p_flag == 1){
+	   	print_pt(pt_table);
+  	}
+		print_sb(sb);
+
+  	print_inode(ldr, perm);
+  }
+  
+  /*Print contents of current filepath*/
+
+  findFile(img, a.filepath, ldr);
+
+  if (ldr -> inod -> mode & DIRECTORY_MASK){
+    /*Filepath is a directory*/
+
+    dirent *entries = (dirent *)ldr->contents;
+
+    if (strcmp(a.filepath, ".") != 0){
+      fprintf(stderr, "%s:\n", a.filepath);
+    }
+    else{
+      fprintf(stderr, "/:\n");
+    }
+
+    /*Load each zone contents and printed it out*/
+    inode dir_inode;
+
+    while(!ldr->all_loaded){
+      get_next_zone(ldr, img);
+      for(i = 0; i < ldr->z_size / sizeof(dirent); i++){
+        if(entries[i].inode != 0){
+          load_dirent_inode(img, ldr, &dir_inode, entries[i].inode);
+          get_permission(&dir_inode, perm);
+          fprintf(stderr, "%s %9d %s\n", perm, 
+            dir_inode.size, entries[i].name);
+        }
+      }
+    }
+  }
+  else{
+    /*Filepath is a file*/
+    get_permission(ldr -> inod, perm);
+    printf("%s %9d %9s\n", perm, ldr -> inod -> size, a.filepath);
+  }
+
+  return 0;
 }
 
