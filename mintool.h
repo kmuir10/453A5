@@ -94,6 +94,7 @@ typedef struct sublock{
 #define DIRECT_ZONES  7
 #define REGULAR_FILE  0100000
 #define DIRECTORY     040000
+#define FILE_MASK     0170000
 
 typedef struct inode{
   uint16_t mode;

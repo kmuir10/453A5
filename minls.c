@@ -178,6 +178,7 @@ int main(int argc, char *argv[]){
     /*print all files info*/
 
     //search_dir and search zone (refactor both of them)
+    get_next_zone(ldr, img);
     dirent *entries = (dirent *)ldr->contents;
 
     fprintf(stderr, "\n/:\n");

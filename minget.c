@@ -68,7 +68,7 @@ int main(int argc, char *argv[]){
     fprintf(stderr, "%s is a directory\n", a.filepath);
     exit(EXIT_FAILURE);
   }
-  if(!(ldr->inod->mode & REGULAR_FILE_MASK)){
+  if((ldr->inod->mode & FILE_MASK) != REGULAR_FILE){
     fprintf(stderr, "%s is not a regular file\n", a.filepath);
     exit(EXIT_FAILURE);
   }

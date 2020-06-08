@@ -200,6 +200,10 @@ uint32_t search_dir(FILE *img, char *tok, loader *ldr){
   if(strcmp(tok, "..") == 0){
     return dirent_inode_val(img, ldr, 1);
   }
+  if(!(ldr->inod->mode & DIRECTORY)){
+    fprintf(stderr, "This isn't a directory\n");
+    exit(EXIT_FAILURE);
+  }
   while(!ldr->all_loaded){
     get_next_zone(ldr, img);
     if((inode_num = search_zone(img, tok, ldr))){
