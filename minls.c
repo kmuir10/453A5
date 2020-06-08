@@ -123,50 +123,50 @@ int main(int argc, char *argv[]){
 
   	if (a.p_flag == 1){
   		fprintf(stderr, "\nPartition:\n");
-	  	fprintf(stderr, "\tbootind %u\n", pt_table -> bootind);
-	  	fprintf(stderr, "\tstart_head %u\n", pt_table -> start_head);
-	   	fprintf(stderr, "\tstart_sec %u\n", pt_table -> start_sec);
-	   	fprintf(stderr, "\tstart_cyl %u\n", pt_table -> start_cyl);
-	   	fprintf(stderr, "\ttype %u\n", pt_table -> type);
-	   	fprintf(stderr, "\tend_head %u\n", pt_table -> end_head);
-	   	fprintf(stderr, "\tend_sec %u\n", pt_table -> end_sec);
-	   	fprintf(stderr, "\tend_cyl %u\n", pt_table -> end_cyl);
-	   	fprintf(stderr, "\tlFirst %u\n", pt_table -> lFirst);
-	   	fprintf(stderr, "\tsize %u\n", pt_table -> size);
+	  	fprintf(stderr, "\tbootind %9u\n", pt_table -> bootind);
+	  	fprintf(stderr, "\tstart_head %9u\n", pt_table -> start_head);
+	   	fprintf(stderr, "\tstart_sec %9u\n", pt_table -> start_sec);
+	   	fprintf(stderr, "\tstart_cyl %9u\n", pt_table -> start_cyl);
+	   	fprintf(stderr, "\ttype %9u\n", pt_table -> type);
+	   	fprintf(stderr, "\tend_head %9u\n", pt_table -> end_head);
+	   	fprintf(stderr, "\tend_sec %9u\n", pt_table -> end_sec);
+	   	fprintf(stderr, "\tend_cyl %9u\n", pt_table -> end_cyl);
+	   	fprintf(stderr, "\tlFirst %9u\n", pt_table -> lFirst);
+	   	fprintf(stderr, "\tsize %9u\n", pt_table -> size);
   	}
 
    	fprintf(stderr, "\nSuperblock:\n");
    	fprintf(stderr, "Stored Fields:\n");
-   	fprintf(stderr, "\tninodes: %u\n", sb.ninodes);
-   	fprintf(stderr, "\ti_blocks %u\n", sb.i_blocks);
-   	fprintf(stderr, "\tz_blocks %u\n", sb.z_blocks);
-   	fprintf(stderr, "\tfirstdata %u\n", sb.firstdata);
-   	fprintf(stderr, "\tlog_zone_size %u\n", sb.log_zone_size);
-   	fprintf(stderr, "\tmax_file %u\n", sb.max_file);
-   	fprintf(stderr, "\tmagic 0x%x\n", sb.magic);
-   	fprintf(stderr, "\tzones %u\n", sb.zones);
-   	fprintf(stderr, "\tblocksize %u\n", sb.blocksize);
-   	fprintf(stderr, "\tsubversion %u\n", sb.subversion);
+   	fprintf(stderr, "\tninodes: %9u\n", sb.ninodes);
+   	fprintf(stderr, "\ti_blocks %9u\n", sb.i_blocks);
+   	fprintf(stderr, "\tz_blocks %9u\n", sb.z_blocks);
+   	fprintf(stderr, "\tfirstdata %9u\n", sb.firstdata);
+   	fprintf(stderr, "\tlog_zone_size %9u\n", sb.log_zone_size);
+   	fprintf(stderr, "\tmax_file %9u\n", sb.max_file);
+   	fprintf(stderr, "\tmagic 0x%9x\n", sb.magic);
+   	fprintf(stderr, "\tzones %9u\n", sb.zones);
+   	fprintf(stderr, "\tblocksize %9u\n", sb.blocksize);
+   	fprintf(stderr, "\tsubversion %9u\n", sb.subversion);
 
    	fprintf(stderr, "\nFile inode:\n");
-   	fprintf(stderr, "\tuint16_t mode 0x%x (%s)\n", 
+   	fprintf(stderr, "\tuint16_t mode 0x%9x (%9s)\n", 
       ldr -> inod -> mode, perm);
-   	fprintf(stderr, "\tuint16_t links %u\n", ldr -> inod -> links);
-   	fprintf(stderr, "\tuint16_t uid %u\n", ldr -> inod -> uid);
-   	fprintf(stderr, "\tuint16_t gid %u\n", ldr -> inod -> gid);
-   	fprintf(stderr, "\tuint32_t size %u\n", ldr -> inod -> size);
-   	fprintf(stderr, "\tuint32_t atime %u --- ", ldr -> inod -> atime);
+   	fprintf(stderr, "\tuint16_t links %9u\n", ldr -> inod -> links);
+   	fprintf(stderr, "\tuint16_t uid %9u\n", ldr -> inod -> uid);
+   	fprintf(stderr, "\tuint16_t gid %9u\n", ldr -> inod -> gid);
+   	fprintf(stderr, "\tuint32_t size %9u\n", ldr -> inod -> size);
+   	fprintf(stderr, "\tuint32_t atime %9u --- ", ldr -> inod -> atime);
    	get_time(ldr -> inod -> atime);
-   	fprintf(stderr, "\tuint32_t mtime %u --- ", ldr -> inod -> mtime);
+   	fprintf(stderr, "\tuint32_t mtime %9u --- ", ldr -> inod -> mtime);
    	get_time(ldr -> inod -> mtime);
-   	fprintf(stderr, "\tuint32_t ctime %u --- ", ldr -> inod -> ctime);
+   	fprintf(stderr, "\tuint32_t ctime %9u --- ", ldr -> inod -> ctime);
    	get_time(ldr -> inod -> ctime);
    	fprintf(stderr, "\n\tDIRECT_ZONES\n");
    	for (i = 0; i < DIRECT_ZONES; i++){
-   	  fprintf(stderr, "\t\tzone[%i] = %u\n", i, ldr -> inod -> zone[i]);
+   	  fprintf(stderr, "\t\tzone[%i] = %9u\n", i, ldr -> inod -> zone[i]);
    	}
-    fprintf(stderr, "\tuint32_t indirect %u\n", ldr -> inod -> indirect);
-    fprintf(stderr, "\tuint32_t double %u\n", ldr -> inod -> two_indirect);
+    fprintf(stderr, "\tuint32_t indirect %9u\n", ldr -> inod -> indirect);
+    fprintf(stderr, "\tuint32_t double %9u\n", ldr -> inod -> two_indirect);
   }
   
   /*Print contents of current filepath*/
@@ -178,14 +178,16 @@ int main(int argc, char *argv[]){
     /*print all files info*/
 
     //search_dir and search zone (refactor both of them)
+    //load_inode(img, ldr, inode_num);
+    get_next_zone(ldr, img);
     dirent *entries = (dirent *)ldr->contents;
 
-    fprintf(stderr, "\n/:\n");
+    fprintf(stderr, "%s:\n", a.filepath);
     for(i = 0; i < ldr->z_size / sizeof(dirent); i++){
       if(entries[i].inode != 0){
-         load_inode(img, ldr, entries[i].inode);
+        load_inode(img, ldr, entries[i].inode);
         get_permission(ldr -> inod, perm);
-        fprintf(stderr, "%s %d %s\n", perm, 
+        fprintf(stderr, "%s %9d %s\n", perm, 
           ldr -> inod -> size, entries[i].name);
       }
     }
@@ -194,7 +196,7 @@ int main(int argc, char *argv[]){
     /*Is a file*/
     /*Print mode, size, and filename*/
     get_permission(ldr -> inod, perm);
-    printf("%s %d %s\n", perm, ldr -> inod -> size, a.filepath);
+    printf("%s %9d %9s\n", perm, ldr -> inod -> size, a.filepath);
   }
 
   return 0;
