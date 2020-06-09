@@ -56,16 +56,18 @@ void getPtable(FILE *img, partent *pt, int ptStart){
   }
 }
 
-void getSublock(FILE *img, sublock *sb, int ptStart){
+void getSublock(args a, FILE *img, sublock *sb, int ptStart){
   int sbLoc = ptStart + SBLOCK_ADDR;
   if(fseek(img, sbLoc, SEEK_SET) < 0){
     perror("fseek");
     exit(EXIT_FAILURE);
   }
-
   if(fread(sb, sizeof(sublock), 1, img) < 1){
     perror("fread");
     exit(EXIT_FAILURE);
+  }
+  if(a.v_flag){
+    print_sb(*sb);
   }
 }
 
@@ -217,15 +219,18 @@ uint32_t search_dir(FILE *img, char *tok, loader *ldr){
   return inode_num;
 }
 
-void findFile(FILE *img, char *path, loader *ldr){
+void findFile(args a, FILE *img, loader *ldr){
   uint32_t inode_num;
-  char *tokenized = safe_malloc(strlen(path));
-  strcpy(tokenized, path);
+  char *tokenized = safe_malloc(strlen(a.filepath));
+  strcpy(tokenized, a.filepath);
   char *tok = strtok(tokenized, "/");
   do{
     inode_num = search_dir(img, tok, ldr);
     load_ldr_inode(img, ldr, inode_num);
   }while((tok = strtok(NULL, "/")) != NULL);
+  if(a.v_flag){
+    print_inode(ldr);
+  }
   free(tokenized);
 }
 
@@ -266,3 +271,152 @@ args parse_flags(int argc, char *argv[]){
   }
   return a;
 }
+
+FILE *open_image(char *image_path){
+  FILE *img = fopen(image_path, "r");
+  if(img == NULL){
+    perror("fopen");
+    exit(EXIT_FAILURE);
+  }
+  return img;
+}
+
+FILE *open_dest(char *dest_path){
+  FILE *dest;
+  if(dest_path != NULL){
+    dest = fopen(dest_path, "w");
+    if(dest == NULL){
+      perror("fopen");
+      exit(EXIT_FAILURE);
+    }
+  }
+  else{
+    dest = fopen("/dev/stdout", "w");
+  }
+  return dest;
+}
+
+int find_pt(args a, FILE *img){
+  partent pt_table[4];
+  int pt_loc;
+
+  if(a.p_flag){
+    getPtable(img, pt_table, 0);
+    pt_loc = pt_table[a.pt].lFirst * SECTOR_SZ;
+    if(a.v_flag){
+      print_pt(pt_table);
+    }
+  }
+
+  if(a.s_flag){
+    getPtable(img, pt_table, pt_table[a.pt].lFirst);
+    pt_loc = pt_table[a.spt].lFirst * SECTOR_SZ;
+    if(a.v_flag){
+      print_pt(pt_table);
+    }
+  }
+  return pt_loc;
+}
+
+void print_pt(partent pt_table[4]){
+	fprintf(stderr, "\nPartition:\n");
+	fprintf(stderr, "\tbootind %9u\n", pt_table->bootind);
+	fprintf(stderr, "\tstart_head %9u\n", pt_table->start_head);
+ 	fprintf(stderr, "\tstart_sec %9u\n", pt_table->start_sec);
+ 	fprintf(stderr, "\tstart_cyl %9u\n", pt_table->start_cyl);
+ 	fprintf(stderr, "\ttype %9u\n", pt_table->type);
+ 	fprintf(stderr, "\tend_head %9u\n", pt_table->end_head);
+ 	fprintf(stderr, "\tend_sec %9u\n", pt_table->end_sec);
+ 	fprintf(stderr, "\tend_cyl %9u\n", pt_table->end_cyl);
+ 	fprintf(stderr, "\tlFirst %9u\n", pt_table->lFirst);
+ 	fprintf(stderr, "\tsize %9u\n", pt_table->size);
+}
+
+void print_sb(sublock sb){
+	fprintf(stderr, "\nSuperblock:\n");
+ 	fprintf(stderr, "Stored Fields:\n");
+ 	fprintf(stderr, "\tninodes: %9u\n", sb.ninodes);
+ 	fprintf(stderr, "\ti_blocks %9u\n", sb.i_blocks);
+ 	fprintf(stderr, "\tz_blocks %9u\n", sb.z_blocks);
+ 	fprintf(stderr, "\tfirstdata %9u\n", sb.firstdata);
+ 	fprintf(stderr, "\tlog_zone_size %9u\n", sb.log_zone_size);
+ 	fprintf(stderr, "\tmax_file %9u\n", sb.max_file);
+ 	fprintf(stderr, "\tmagic 0x%9x\n", sb.magic);
+ 	fprintf(stderr, "\tzones %9u\n", sb.zones);
+ 	fprintf(stderr, "\tblocksize %9u\n", sb.blocksize);
+ 	fprintf(stderr, "\tsubversion %9u\n", sb.subversion);
+}
+
+void print_inode(loader *ldr){
+  char perm[PERMISSION_SIZE + 1];
+  int i;
+  get_permission(ldr->inod, perm);
+	fprintf(stderr, "\nFile inode:\n");
+ 	fprintf(stderr, "\tuint16_t mode 0x%9x (%9s)\n", 
+    ldr->inod->mode, perm);
+ 	fprintf(stderr, "\tuint16_t links %9u\n", ldr->inod->links);
+ 	fprintf(stderr, "\tuint16_t uid %9u\n", ldr->inod->uid);
+ 	fprintf(stderr, "\tuint16_t gid %9u\n", ldr->inod->gid);
+ 	fprintf(stderr, "\tuint32_t size %9u\n", ldr->inod->size);
+ 	fprintf(stderr, "\tuint32_t atime %9u --- ", ldr->inod->atime);
+ 	get_time(ldr->inod->atime);
+ 	fprintf(stderr, "\tuint32_t mtime %9u --- ", ldr->inod->mtime);
+ 	get_time(ldr->inod->mtime);
+ 	fprintf(stderr, "\tuint32_t ctime %9u --- ", ldr->inod->ctime);
+ 	get_time(ldr->inod->ctime);
+ 	fprintf(stderr, "\n\tDIRECT_ZONES\n");
+ 	for (i = 0; i < DIRECT_ZONES; i++){
+ 	  fprintf(stderr, "\t\tzone[%i] = %9u\n", i, ldr->inod->zone[i]);
+ 	}
+  fprintf(stderr, "\tuint32_t indirect %9u\n", ldr->inod->indirect);
+  fprintf(stderr, "\tuint32_t double %9u\n", ldr->inod->two_indirect);
+}
+
+void get_permission(inode* i, char* perm){
+  char permissions[PERMISSION_SIZE + 1];
+  memset(permissions, '-', PERMISSION_SIZE);
+  permissions[PERMISSION_SIZE] = 0;
+
+  if (i->mode & DIRECTORY_MASK){
+    permissions[DIRECTORY_INDEX] = 'd';
+  }
+  if (i->mode & OWNER_READ_MASK){
+    permissions[OWNER_READ] = 'r';
+  }
+  if (i->mode & OWNER_WRITE_MASK){
+    permissions[OWNER_WRITE] = 'w';
+  }
+  if (i->mode & OWNER_EXECUTE_MASK){
+    permissions[OWNER_EXECUTE] = 'x';
+  }
+  if (i->mode & GROUP_READ_MASK){
+    permissions[GROUP_READ] = 'r';
+  }
+  if (i->mode & GROUP_WRITE_MASK){
+    permissions[GROUP_WRITE] = 'w';
+  }
+  if (i->mode & GROUP_EXECUTE_MASK){
+    permissions[GROUP_EXECUTE] = 'x';
+  }
+  if (i->mode & OTHER_READ_MASK){
+    permissions[OTHER_READ] = 'r';
+  }
+  if (i->mode & OTHER_WRITE_MASK){
+    permissions[OTHER_WRITE] = 'w';
+  }
+  if (i->mode & OTHER_EXECUTE_MASK){
+    permissions[OTHER_EXECUTE] = 'x';
+  }
+
+  strcpy(perm, permissions);
+}
+
+void get_time(uint32_t ti){
+	uint32_t rawtime = ti;
+ 	struct tm * timeinfo;
+ 	time_t t = rawtime;
+ 	timeinfo = localtime(&t);
+ 	asctime(timeinfo);
+ 	fprintf(stderr, "%s", asctime(timeinfo));
+}
+

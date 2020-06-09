@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <stdint.h>
 #include "debug.h"
+#include <time.h>
 
 void *safe_malloc(int32_t size);
 
@@ -132,7 +133,7 @@ void getNextInode(FILE *img, inode *inod, char *nextFile,
   int32_t ptLoc, int32_t zSize);
 
 /* get superblock */
-void getSublock(FILE *img, sublock *sb, int ptStart);
+void getSublock(args a, FILE *img, sublock *sb, int ptStart);
 
 typedef struct indir_zone{
   uint32_t *zones;
@@ -153,22 +154,20 @@ typedef struct loader{
   int empty_count;
 }loader;
 
-/* Get the root inode of a filesystem */
 void findRoot(FILE *img, loader *ldr);
-
 void load_ldr_inode(FILE *img, loader *ldr, uint32_t inode_num);
-
-/* Get an inode from a filepath and superblock */
-void findFile(FILE *img, char *path, loader *ldr);
-
-/* parse v, p, and s options */
+void findFile(args a, FILE *img, loader *ldr);
 args parse_flags(int argc, char *argv[]);
-
 void load_zone(FILE *img, void *buf, int32_t zSize);
-
 loader *prep_ldr(sublock sb, int32_t pt_loc);
-
 void get_next_zone(loader *ldr, FILE *img);
-
+int find_pt(args a, FILE *img);
+FILE *open_dest(char *dest_path);
+FILE *open_image(char *image_path);
+void print_pt(partent pt_table[4]);
+void print_sb(sublock sb);
+void print_inode(loader *ldr);
+void get_permission(inode* i, char* perm);
+void get_time(uint32_t ti);
 #endif
 
