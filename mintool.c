@@ -371,19 +371,19 @@ void print_inode(loader *ldr){
   int i;
   get_permission(ldr->inod, perm);
 	fprintf(stderr, "\nFile inode:\n");
- 	fprintf(stderr, "  unsigned short mode %#11x    (%s)\n", 
+ 	fprintf(stderr, "  unsigned short mode %#13x    (%s)\n", 
     ldr->inod->mode, perm);
- 	fprintf(stderr, "  uint16_t links %11u\n", ldr->inod->links);
- 	fprintf(stderr, "  uint16_t uid %11u\n", ldr->inod->uid);
- 	fprintf(stderr, "  uint16_t gid %11u\n", ldr->inod->gid);
- 	fprintf(stderr, "  uint32_t size %11u\n", ldr->inod->size);
- 	fprintf(stderr, "  uint32_t atime %11u --- ", ldr->inod->atime);
+ 	fprintf(stderr, "  unsigned short links %12u\n", ldr->inod->links);
+ 	fprintf(stderr, "  unsigned short uid %14u\n", ldr->inod->uid);
+ 	fprintf(stderr, "  unsigned short gid %14u\n", ldr->inod->gid);
+ 	fprintf(stderr, "  uint32_t  size %12u\n", ldr->inod->size);
+ 	fprintf(stderr, "  uint32_t  atime %13u --- ", ldr->inod->atime);
  	get_time(ldr->inod->atime);
- 	fprintf(stderr, "  uint32_t mtime %11u --- ", ldr->inod->mtime);
+ 	fprintf(stderr, "  uint32_t  mtime %13u --- ", ldr->inod->mtime);
  	get_time(ldr->inod->mtime);
- 	fprintf(stderr, "  uint32_t ctime %11u --- ", ldr->inod->ctime);
+ 	fprintf(stderr, "  uint32_t  ctime %13u --- ", ldr->inod->ctime);
  	get_time(ldr->inod->ctime);
- 	fprintf(stderr, "\nDIRECT_ZONES\n");
+ 	fprintf(stderr, "\nDirect zones\n");
  	for (i = 0; i < DIRECT_ZONES; i++){
  	  fprintf(stderr, "\t\tzone[%i] = %11u\n", i, ldr->inod->zone[i]);
  	}
