@@ -14,6 +14,8 @@ root directory.*/
 void bad_args();
 args read_input(int argc, char *argv[]);
 
+/*Calculates the address of the inode i_num and loads from that 
+  address into inod. Can be used without modifying the ldr's inode*/
 void load_dirent_inode(FILE *img, loader *ldr, inode *inod, uint32_t i_num){
   int32_t addr = ldr->inodes_loc + (i_num - 1)  * sizeof(inode);
   if(fseek(img, addr, SEEK_SET) < 0){
@@ -26,6 +28,7 @@ void load_dirent_inode(FILE *img, loader *ldr, inode *inod, uint32_t i_num){
   }
 }
 
+/*Reads the arguments from the terminal and set flags, etc.*/
 args read_input(int argc, char *argv[]){
   args a;
   if (argc == 1){
@@ -44,6 +47,7 @@ args read_input(int argc, char *argv[]){
   return a;
 }
 
+/*If user calls only ./minls, we print these usages*/
 void bad_args(){
   printf("usage: minls [ -v ] [ -p num [ -s num ] ] imagefile [ path ]\n");
   printf("Options\n");
@@ -54,6 +58,7 @@ void bad_args(){
   exit(EXIT_FAILURE);
 }
 
+/*Print all contents in a filepath*/
 void print_file_contents(loader* ldr, args a, FILE *img,
 	char perm[PERMISSION_SIZE + 1]){
 
