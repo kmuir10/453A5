@@ -38,8 +38,10 @@ void bad_args(){
 
 void print_file(FILE *img, loader *ldr, args a, FILE *dest){
   int left_to_print = ldr->inod->size, to_print_now;
-  char *empty = safe_malloc(ldr->z_size);
+  char *empty = safe_malloc(ldr->z_size);           /* for "printing" holes */
   memset(empty, 0, ldr->z_size);
+
+  /* minget can only get a regular file */
   if(ldr->inod->mode & DIRECTORY_MASK){
     fprintf(stderr, "%s is a directory\n", a.filepath);
     exit(EXIT_FAILURE);
@@ -48,10 +50,14 @@ void print_file(FILE *img, loader *ldr, args a, FILE *dest){
     fprintf(stderr, "%s is not a regular file\n", a.filepath);
     exit(EXIT_FAILURE);
   }
+
+  /* print zone by zone */
   while(!ldr->all_loaded){
     get_next_zone(ldr, img);
     int i;
     if(ldr->empty_count > 0){
+
+      /* print as many holes as were found using the empty array */
       for(i = 0; i < ldr->empty_count; i++){
         fwrite(empty, sizeof(char), ldr->z_size, dest);
         left_to_print -= ldr->z_size;
@@ -59,6 +65,8 @@ void print_file(FILE *img, loader *ldr, args a, FILE *dest){
       ldr->empty_count = 0;
     }
     else{
+
+      /* only print as many characters as needed. Do not print any null */
       to_print_now = min(left_to_print, ldr->z_size);
       fwrite(ldr->contents, sizeof(char), to_print_now, dest);
       left_to_print -= to_print_now;
@@ -74,6 +82,8 @@ args read_input(int argc, char *argv[]){
   else{
     a = parse_flags(argc, argv);
     if (a.has_flags == 1){
+
+      /* must have at least two more arguments left */
       if(optind >= argc - 1){
         bad_args();
       }
@@ -86,7 +96,6 @@ args read_input(int argc, char *argv[]){
       a.filepath = argv[2];
       a.dest = (argc == 4) ? argv[3] : NULL;
     }
-
   }
   return a;
 }

@@ -71,6 +71,7 @@ void getSublock(args a, FILE *img, sublock *sb, int ptStart){
   }
 }
 
+/* the one and only function for creating and initializing a loader struct */
 loader *prep_ldr(sublock sb, int32_t pt_loc){
   loader *ldr = safe_malloc(sizeof(loader));
   ldr->inod = safe_malloc(sizeof(inode));
@@ -86,7 +87,6 @@ loader *prep_ldr(sublock sb, int32_t pt_loc){
   ldr->all_loaded = 0;
   ldr->found = 0;
   ldr->empty_count = 0;
-  
   return ldr;
 }
 
@@ -101,6 +101,8 @@ void read_zone(FILE *img, int32_t addr, loader *ldr, void *tgt){
   }
 }
 
+/* Specifically for updating the inode in the loader struct. Must be called
+ * before searching through or printing the contents of the associated file */
 void load_ldr_inode(FILE *img, loader *ldr, uint32_t inode_num){
   int32_t addr = ldr->inodes_loc + (inode_num - 1)  * sizeof(inode);
   if(fseek(img, addr, SEEK_SET) < 0){
@@ -116,13 +118,18 @@ void load_ldr_inode(FILE *img, loader *ldr, uint32_t inode_num){
   ldr->current_zone = ldr->all_loaded = ldr->found = 0;
 }
 
+/* Gets a zone from an indirect zone determined by the loader */
 void get_next_indirect(loader *ldr, FILE *img){
   int addr;
   ldr->empty_count = 0;
+
+  /* loop through whole file or until non-hole zone is found */
   while (ldr->current_zone * ldr->z_size < ldr->inod -> size){
 
     /* Loop through indirect zone contents */
     while (ldr->i1.z_idx < ldr->z_size / sizeof(int32_t)){
+
+      /* if not a hole */
       if (ldr->i1.zones[ldr->i1.z_idx] != 0){
         addr = ldr->pt_loc + ldr->i1.zones[ldr->i1.z_idx] * ldr->z_size;
         read_zone(img, addr, ldr, (void *)ldr->contents);
@@ -130,12 +137,15 @@ void get_next_indirect(loader *ldr, FILE *img){
         ldr->current_zone++;
         return;
       }
+
+      /* else continue searching and increment blank zones to print */
       ldr->empty_count++;
       ldr->i1.z_idx++;
       ldr->current_zone++;
     }
 
-    /* Loop through double indirect zone contents */
+    /* Loop through double indirect zone contents and load next indirect zone
+     * into the loader struct*/
     while (ldr->i2.z_idx < ldr->z_size / sizeof(int32_t)){
       if (ldr->i2.zones[ldr->i2.z_idx] != 0){
         addr = ldr->pt_loc + ldr->i2.zones[ldr->i2.z_idx] * ldr->z_size;
@@ -151,9 +161,14 @@ void get_next_indirect(loader *ldr, FILE *img){
   ldr->all_loaded = 1;
 }
 
+/* loads the next non-hole into the loader struct, increments empty hole
+ * counter if holes are found. These will be printed elsewhere in the
+ * case of minget */
 void get_next_zone(loader *ldr, FILE *img){
   int addr;
   if (ldr->current_zone < DIRECT_ZONES){
+
+    /* Calculate address of non-hole zone and read it in */
     if(ldr->inod->zone[ldr->current_zone] != 0){
       addr = ldr->pt_loc + ldr->inod->zone[ldr->current_zone] * ldr->z_size;
       read_zone(img, addr, ldr, (void *)ldr->contents);
@@ -163,14 +178,20 @@ void get_next_zone(loader *ldr, FILE *img){
     }
     ldr->current_zone++;
   }
+
+  /* direct zones have run out */
   else{
     get_next_indirect(ldr, img);
   }
+
+  /* signal when file all file contents are fully loaded */
   if(ldr->current_zone * ldr->z_size > ldr->inod->size){
     ldr->all_loaded = 1;
   }
 }
 
+/* look through a zone for a dirent with filename == tok 
+ * and return its inode number */
 uint32_t search_zone(FILE *img, char *tok, loader *ldr){
   int i;
   dirent *entries = (dirent *)ldr->contents;
@@ -186,6 +207,8 @@ uint32_t search_zone(FILE *img, char *tok, loader *ldr){
   return 0;
 }
 
+/* Gets the first zone of a directory, treats it as an array of directory
+ * entries, and then returns the inode number of a particular index */
 uint32_t dirent_inode_val(FILE *img, loader *ldr, int entry){
     get_next_zone(ldr, img);
     dirent *entries = (dirent *)ldr->contents;
@@ -195,16 +218,20 @@ uint32_t dirent_inode_val(FILE *img, loader *ldr, int entry){
 uint32_t search_dir(FILE *img, char *tok, loader *ldr){
   uint32_t inode_num;
   ldr->found = 0;
+
+  /* Special cases, present and parent directory */
   if(strcmp(tok, ".") == 0){
     return dirent_inode_val(img, ldr, 0);
   }
   if(strcmp(tok, "..") == 0){
     return dirent_inode_val(img, ldr, 1);
   }
+
   if(!(ldr->inod->mode & DIRECTORY)){
     fprintf(stderr, "This isn't a directory\n");
     exit(EXIT_FAILURE);
   }
+
   while(!ldr->all_loaded){
     get_next_zone(ldr, img);
     if((inode_num = search_zone(img, tok, ldr))){
@@ -218,6 +245,10 @@ uint32_t search_dir(FILE *img, char *tok, loader *ldr){
   return inode_num;
 }
 
+/* copies the filepath and splits it into individual filenames. Searches the
+ * current directory for a token, then loads that directory until the search
+ * either fails or the last token is found. The function returns with the
+ * loader ready to read the contents of that file/directory */
 void findFile(args a, FILE *img, loader *ldr){
   uint32_t inode_num;
   char *tokenized = safe_malloc(strlen(a.filepath));
@@ -241,6 +272,9 @@ void findRoot(FILE *img, loader *ldr){
   }
 }
 
+/* creates and fills an args struct with partition, subpartition, and verbose
+ * flag information. optind is incremented after -p and -s because numbers
+ * are expected after each flag */
 args parse_flags(int argc, char *argv[]){
   int opt = 0;
   args a = {0, 0, 0, 0, 0, 0, NULL, NULL, NULL};
@@ -280,6 +314,8 @@ FILE *open_image(char *image_path){
   return img;
 }
 
+/* Always called, whether a destination is specified or not. /dev/stdout
+ * is the default destination if none is provided */
 FILE *open_dest(char *dest_path){
   FILE *dest;
   if(dest_path != NULL){
@@ -295,6 +331,8 @@ FILE *open_dest(char *dest_path){
   return dest;
 }
 
+/* loads and prints partition and subpartition information depending on
+ * what is specified by the values set in args a */
 int find_pt(args a, FILE *img){
   partent pt_table[4];
   int pt_loc;
