@@ -54,8 +54,45 @@ void bad_args(){
   exit(EXIT_FAILURE);
 }
 
+void print_file_contents(loader* ldr, args a, FILE *img,
+	char perm[PERMISSION_SIZE + 1]){
+
+	int i;
+	if (ldr->inod->mode & DIRECTORY_MASK){
+    /*Filepath is a directory*/
+
+    dirent *entries = (dirent *)ldr->contents;
+
+    if (strcmp(a.filepath, ".") != 0){
+      printf("%s:\n", a.filepath);
+    }
+    else{
+      printf("/:\n");
+    }
+
+    /*Load each zone contents and printed it out*/
+    inode dir_inode;
+
+    while(!ldr->all_loaded){
+      get_next_zone(ldr, img);
+      for(i = 0; i < ldr->z_size / sizeof(dirent); i++){
+        if(entries[i].inode != 0){
+          load_dirent_inode(img, ldr, &dir_inode, entries[i].inode);
+          get_permission(&dir_inode, perm);
+          printf("%s %9d %s\n", perm, 
+            dir_inode.size, entries[i].name);
+        }
+      }
+    }
+  }
+  else{
+    /*Filepath is a file*/
+    get_permission(ldr->inod, perm);
+    printf("%s %9d %9s\n", perm, ldr->inod->size, a.filepath);
+  }
+}
+
 int main(int argc, char *argv[]){  
-  int i;
   args a = read_input(argc, argv);
   FILE *img = open_image(a.image);
   int pt_loc = find_pt(a, img);
@@ -68,41 +105,8 @@ int main(int argc, char *argv[]){
   char perm[PERMISSION_SIZE + 1];
 
   /*Print contents of current filepath*/
-
   findFile(a, img, ldr);
-
-  if (ldr->inod->mode & DIRECTORY_MASK){
-    /*Filepath is a directory*/
-
-    dirent *entries = (dirent *)ldr->contents;
-
-    if (strcmp(a.filepath, ".") != 0){
-      fprintf(stderr, "%s:\n", a.filepath);
-    }
-    else{
-      fprintf(stderr, "/:\n");
-    }
-
-    /*Load each zone contents and printed it out*/
-    inode dir_inode;
-
-    while(!ldr->all_loaded){
-      get_next_zone(ldr, img);
-      for(i = 0; i < ldr->z_size / sizeof(dirent); i++){
-        if(entries[i].inode != 0){
-          load_dirent_inode(img, ldr, &dir_inode, entries[i].inode);
-          get_permission(&dir_inode, perm);
-          fprintf(stderr, "%s %9d %s\n", perm, 
-            dir_inode.size, entries[i].name);
-        }
-      }
-    }
-  }
-  else{
-    /*Filepath is a file*/
-    get_permission(ldr->inod, perm);
-    printf("%s %9d %9s\n", perm, ldr->inod->size, a.filepath);
-  }
+  print_file_contents(ldr, a, img, perm);
 
   return 0;
 }

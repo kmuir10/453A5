@@ -60,6 +60,10 @@ typedef struct args{
 #define DECIMAL     10
 #define UNSPEC      -1
 #define PTABLE_SZ   4
+#define MAX_FILENAME_SZ 60
+
+#define MINIX_VERSION 3
+#define FIRSTIMAP 2
 
 /* partition struct */
 typedef struct partent{
@@ -115,7 +119,7 @@ typedef struct inode{
 /* directory entry */
 typedef struct dirent{
   uint32_t inode;
-  char name[60];
+  char name[MAX_FILENAME_SZ];
 }dirent;
 
 /* swap endianness */
