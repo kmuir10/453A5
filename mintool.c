@@ -96,8 +96,7 @@ void read_zone(FILE *img, int32_t addr, loader *ldr, void *tgt){
     exit(EXIT_FAILURE);
   }
   if(fread(tgt, ldr->z_size, 1, img) < 1){
-    fprintf(stderr, "Bad magic number. (0x%x)\n", addr);
-    fprintf(stderr, "This doesn’t look like a MINIX filesystem.\n");
+    perror("fread");
     exit(EXIT_FAILURE);
   }
 }
@@ -145,8 +144,8 @@ void get_next_indirect(loader *ldr, FILE *img){
         break;
       }
       ldr->empty_count += ldr->z_size / sizeof(int32_t);
-      ldr->i2.z_idx++;
       ldr->current_zone += ldr->z_size / sizeof(int32_t);
+      ldr->i2.z_idx++;
     }
   }
   ldr->all_loaded = 1;
